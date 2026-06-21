@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" class="scroll-smooth">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -734,6 +734,7 @@
             generateFallingLeaves();
             cargarCanciones();
             setupIntersectionObserver();
+            setupSmoothScroll();
             const albumLink = document.getElementById("album-link");
             if (albumLink && ALBUM_URL) albumLink.href = ALBUM_URL;
         };
@@ -777,6 +778,44 @@
                 leaf.style.animationDuration = (12 + Math.random() * 10) + 's';
                 container.appendChild(leaf);
             }
+        }
+
+        // --- DESPLAZAMIENTO SUAVE Y ELEGANTE ENTRE SECCIONES ---
+        function setupSmoothScroll() {
+            const navHeight = 80; // altura de la barra fija (h-20)
+            const duration = 900; // ms: más largo = más suave/pausado
+
+            // Easing tipo "ease-in-out" muy suave.
+            const easeInOutCubic = t => t < 0.5
+                ? 4 * t * t * t
+                : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+            function scrollToTarget(targetY) {
+                const startY = window.pageYOffset;
+                const distance = targetY - startY;
+                let startTime = null;
+
+                function step(now) {
+                    if (startTime === null) startTime = now;
+                    const elapsed = now - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    window.scrollTo(0, startY + distance * easeInOutCubic(progress));
+                    if (elapsed < duration) requestAnimationFrame(step);
+                }
+                requestAnimationFrame(step);
+            }
+
+            document.querySelectorAll('a[href^="#"]').forEach(link => {
+                link.addEventListener("click", function(e) {
+                    const id = this.getAttribute("href");
+                    if (id === "#" || id.length < 2) return;
+                    const target = document.querySelector(id);
+                    if (!target) return;
+                    e.preventDefault();
+                    const targetY = target.getBoundingClientRect().top + window.pageYOffset - navHeight;
+                    scrollToTarget(targetY);
+                });
+            });
         }
 
         // --- NAVIGATION ACTIVE TAB COLOR ---
