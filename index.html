@@ -66,7 +66,25 @@
         }
 
         /* Tamaño base general (móvil incluido), un punto mayor para mejor lectura. */
-        html { font-size: 17px; }
+        html { font-size: 18px; }
+
+        /* Subimos los textos diminutos en TODOS los tamaños (móvil incluido) para que
+           sean legibles también para quien usa gafas de cerca. */
+        body [class*="text-[8px]"]  { font-size: 12px !important; }
+        body [class*="text-[9px]"]  { font-size: 13px !important; }
+        body [class*="text-[10px]"] { font-size: 14px !important; }
+
+        /* Despliegue animado del menú móvil (deslizamiento + desvanecido). */
+        #mobile-menu {
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: max-height 0.45s ease, opacity 0.3s ease;
+        }
+        #mobile-menu.open {
+            max-height: 40rem;
+            opacity: 1;
+        }
 
         /* Menú hamburguesa animado: 3 líneas que se transforman en X al abrir. */
         .hamburger {
@@ -94,10 +112,10 @@
         /* Subimos el tamaño base: todo lo definido en rem (títulos, cuerpo, espaciados)
            crece junto y mantiene la jerarquía visual. Los px fijos se ajustan aparte. */
         @media (min-width: 1024px) {
-            html { font-size: 18.5px; }
-            body [class*="text-[8px]"]  { font-size: 11px !important; }
-            body [class*="text-[9px]"]  { font-size: 12px !important; }
-            body [class*="text-[10px]"] { font-size: 13px !important; }
+            html { font-size: 19px; }
+            body [class*="text-[8px]"]  { font-size: 12px !important; }
+            body [class*="text-[9px]"]  { font-size: 13px !important; }
+            body [class*="text-[10px]"] { font-size: 14px !important; }
             /* El menú de navegación se mantiene compacto para que no se parta en dos líneas. */
             body nav .nav-link { font-size: 11px !important; }
         }
@@ -142,7 +160,7 @@
         </div>
 
         <!-- Mobile Menu -->
-        <div id="mobile-menu" class="hidden lg:hidden bg-weddingBeige/95 backdrop-blur-lg border-t border-weddingGold/10">
+        <div id="mobile-menu" class="lg:hidden bg-weddingBeige/95 backdrop-blur-lg border-t border-weddingGold/10">
             <div class="px-4 pt-2 pb-6 space-y-1 text-center">
                 <a href="#inicio" onclick="toggleMobileMenu()" class="block px-3 py-3 rounded-md text-xs font-medium tracking-[0.2em] uppercase text-weddingGreen hover:text-weddingGold transition">Inicio</a>
                 <a href="#ceremonia" onclick="toggleMobileMenu()" class="block px-3 py-3 rounded-md text-xs font-medium tracking-[0.2em] uppercase text-weddingGreen hover:text-weddingGold transition">Ceremonia</a>
@@ -255,7 +273,7 @@
     </section>
 
     <!-- Convite Section -->
-    <section id="convite" class="py-24 md:py-36 bg-weddingSand/30 relative">
+    <section id="convite" class="py-24 md:py-36 bg-weddingGreenLight/40 relative">
         <div class="max-w-4xl mx-auto px-6 text-center">
             <span class="text-[10px] uppercase tracking-[0.3em] text-weddingGold font-semibold mb-3 block">La Celebración</span>
             <h2 class="font-serif text-3xl md:text-4xl text-weddingGreen font-light mb-8">El Convite</h2>
@@ -364,7 +382,7 @@
     </section>
 
     <!-- Alojamiento Section -->
-    <section id="alojamiento" class="py-24 md:py-36 bg-weddingSand/30 relative">
+    <section id="alojamiento" class="py-24 md:py-36 bg-weddingGreenLight/40 relative">
         <div class="max-w-4xl mx-auto px-6 text-center">
             <span class="text-[10px] uppercase tracking-[0.3em] text-weddingGreen font-semibold mb-3 block">Vuestra estancia</span>
             <h2 class="font-serif text-3xl md:text-4xl text-weddingGreen font-light mb-4">Alojamiento Recomendado</h2>
@@ -535,7 +553,7 @@
     </section>
 
     <!-- Playlist de la Noche Section -->
-    <section id="playlist" class="py-24 md:py-36 bg-weddingSand/30 relative">
+    <section id="playlist" class="py-24 md:py-36 bg-weddingGreenLight/40 relative">
         <div class="max-w-4xl mx-auto px-6 text-center">
             <span class="text-[10px] uppercase tracking-[0.3em] text-weddingGreen font-semibold mb-3 block">¡La música es de todos!</span>
             <h2 class="font-serif text-3xl md:text-4xl text-weddingGreen font-light mb-4">Playlist Colectiva</h2>
@@ -612,7 +630,7 @@
     </section>
 
     <!-- Asistente IA Section -->
-    <section id="asistente-ia" class="py-24 md:py-36 bg-weddingSand/30 relative">
+    <section id="asistente-ia" class="py-24 md:py-36 bg-weddingGreenLight/40 relative">
         <div class="max-w-4xl mx-auto px-6 text-center">
             <span class="text-[10px] uppercase tracking-[0.3em] text-weddingGold font-semibold mb-3 block">Atención al invitado</span>
             <h2 class="font-serif text-3xl md:text-4xl text-weddingGreen font-light mb-4">Conserje Virtual IA</h2>
@@ -786,14 +804,14 @@
         function toggleMobileMenu() {
             const menu = document.getElementById("mobile-menu");
             const button = document.getElementById("mobile-menu-button");
-            menu.classList.toggle("hidden");
+            menu.classList.toggle("open");
             button.classList.toggle("open");
         }
 
         document.getElementById("mobile-menu-button").addEventListener("click", () => {
             const menu = document.getElementById("mobile-menu");
             const button = document.getElementById("mobile-menu-button");
-            menu.classList.toggle("hidden");
+            menu.classList.toggle("open");
             button.classList.toggle("open");
         });
 
