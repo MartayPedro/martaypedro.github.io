@@ -73,6 +73,8 @@
         body [class*="text-[8px]"]  { font-size: 12px !important; }
         body [class*="text-[9px]"]  { font-size: 13px !important; }
         body [class*="text-[10px]"] { font-size: 14px !important; }
+        /* El cuerpo de texto (text-xs) un poco mayor para lectura cómoda en móvil. */
+        body [class~="text-xs"] { font-size: 0.85rem !important; }
 
         /* Despliegue animado del menú móvil (deslizamiento + desvanecido). */
         #mobile-menu {
@@ -176,7 +178,7 @@
     </nav>
 
     <!-- Hero / Inicio Section with Romantic Background Image -->
-    <header id="inicio" class="min-h-screen relative flex items-center justify-center pt-20 overflow-hidden bg-cover bg-center bg-no-repeat" style="background-image: url('pedida.jpg');">
+    <header id="inicio" class="min-h-screen relative flex items-center justify-center pt-20 overflow-hidden bg-cover bg-right md:bg-center bg-no-repeat" style="background-image: url('pedida.jpg');">
         <!-- Delicate, Soft overlay filter to guarantee stunning text readability -->
         <div class="absolute inset-0 bg-weddingBeige/65 backdrop-blur-[1px]"></div>
 
