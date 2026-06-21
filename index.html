@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,300..900;1,300..900&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <script>
         tailwind.config = {
             theme: {
@@ -65,11 +65,36 @@
             100% { transform: translateY(110vh) rotate(360deg); left: 90%; opacity: 0; }
         }
 
+        /* Tamaño base general (móvil incluido), un punto mayor para mejor lectura. */
+        html { font-size: 17px; }
+
+        /* Menú hamburguesa animado: 3 líneas que se transforman en X al abrir. */
+        .hamburger {
+            width: 26px;
+            height: 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+        .hamburger span {
+            display: block;
+            width: 100%;
+            height: 2px;
+            border-radius: 2px;
+            background-color: #526B79; /* weddingGreen */
+            transition: transform 0.35s ease, opacity 0.2s ease, background-color 0.2s ease;
+            transform-origin: center;
+        }
+        .hamburger:hover span { background-color: #C5A880; /* weddingGold */ }
+        .hamburger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+        .hamburger.open span:nth-child(2) { opacity: 0; }
+        .hamburger.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
         /* Escalado proporcional SOLO en escritorio (PC). El móvil se mantiene igual. */
         /* Subimos el tamaño base: todo lo definido en rem (títulos, cuerpo, espaciados)
            crece junto y mantiene la jerarquía visual. Los px fijos se ajustan aparte. */
         @media (min-width: 1024px) {
-            html { font-size: 18px; }
+            html { font-size: 18.5px; }
             body [class*="text-[8px]"]  { font-size: 11px !important; }
             body [class*="text-[9px]"]  { font-size: 12px !important; }
             body [class*="text-[10px]"] { font-size: 13px !important; }
@@ -107,8 +132,10 @@
                 </div>
                 <!-- Mobile menu button -->
                 <div class="flex lg:hidden">
-                    <button id="mobile-menu-button" class="text-weddingGreen hover:text-weddingGold focus:outline-none p-2">
-                        <i class="fa-solid fa-bars-staggered text-xl font-light"></i>
+                    <button id="mobile-menu-button" class="hamburger focus:outline-none p-2 box-content" aria-label="Abrir menú">
+                        <span></span>
+                        <span></span>
+                        <span></span>
                     </button>
                 </div>
             </div>
@@ -136,13 +163,13 @@
         <div class="absolute inset-0 bg-weddingBeige/65 backdrop-blur-[1px]"></div>
 
         <div class="relative max-w-4xl mx-auto px-4 text-center z-10 flex flex-col items-center py-12">
-            
+
             <p class="text-[10px] uppercase tracking-[0.4em] text-weddingGreen/80 font-medium mb-4">Nuestra Boda</p>
-            
+
             <h1 class="font-serif text-5xl md:text-7xl lg:text-8xl text-weddingGreen font-extralight tracking-wide mb-6">
                 Marta <span class="font-serif font-light text-weddingGold italic">&</span> Pedro José
             </h1>
-            
+
             <!-- Elegant Date Divider -->
             <div class="flex items-center space-x-6 mb-12">
                 <span class="h-[0.5px] w-16 bg-weddingGold/60"></span>
@@ -190,7 +217,7 @@
         <div class="max-w-4xl mx-auto px-6 text-center">
             <span class="text-[10px] uppercase tracking-[0.3em] text-weddingBlue font-semibold mb-3 block">El Enlace</span>
             <h2 class="font-serif text-3xl md:text-4xl text-weddingGreen font-light mb-8">La Ceremonia</h2>
-            
+
             <div class="h-[1px] w-12 bg-weddingGold/40 mx-auto mb-16"></div>
 
             <div class="bg-white/50 backdrop-blur-sm rounded-3xl overflow-hidden max-w-3xl mx-auto border border-weddingGold/10 transition duration-300">
@@ -202,7 +229,7 @@
                     <div class="p-8 md:p-12 md:col-span-7 flex flex-col justify-center text-left">
                         <h3 class="font-serif text-xl text-weddingGreen mb-2">Iglesia de Santa Marina de Aguas Santas</h3>
                         <p class="text-[10px] tracking-[0.15em] uppercase text-weddingGold font-semibold mb-6">Córdoba capital</p>
-                        
+
                         <p class="text-xs text-weddingDark/80 mb-8 leading-relaxed font-light">
                             Bajo las bóvedas de este histórico templo del siglo XIII fundado tras la reconquista, nos daremos el "sí, quiero" en una ceremonia cargada de emoción. Nos haría inmensamente felices contar con vuestra presencia en este gran hito de nuestras vidas.
                         </p>
@@ -232,7 +259,7 @@
         <div class="max-w-4xl mx-auto px-6 text-center">
             <span class="text-[10px] uppercase tracking-[0.3em] text-weddingGold font-semibold mb-3 block">La Celebración</span>
             <h2 class="font-serif text-3xl md:text-4xl text-weddingGreen font-light mb-8">El Convite</h2>
-            
+
             <div class="h-[1px] w-12 bg-weddingGold/40 mx-auto mb-16"></div>
 
             <div class="bg-white/50 backdrop-blur-sm rounded-3xl overflow-hidden max-w-3xl mx-auto border border-weddingGold/10 transition duration-300">
@@ -240,7 +267,7 @@
                     <div class="p-8 md:p-12 md:col-span-7 flex flex-col justify-center text-left order-2 md:order-1">
                         <h3 class="font-serif text-xl text-weddingGreen mb-2">Hacienda S'cultura</h3>
                         <p class="text-[10px] tracking-[0.15em] uppercase text-weddingGold font-semibold mb-6">Un paraje excepcional</p>
-                        
+
                         <p class="text-xs text-weddingDark/80 mb-8 leading-relaxed font-light">
                             Situada al cobijo de la majestuosa Sierra Morena, en la mítica Hacienda S'cultura nos reuniremos para brindar, cenar y bailar hasta el amanecer. Nos aguarda una preciosa noche cordobesa repleta de risas, vino de la tierra y alegría compartida.
                         </p>
@@ -281,7 +308,7 @@
             <!-- Beautiful Minimal Timeline -->
             <div class="relative max-w-3xl mx-auto">
                 <div class="absolute left-4 md:left-1/2 top-0 bottom-0 w-[0.5px] bg-weddingGold/30"></div>
-                
+
                 <!-- Timeline item 1 -->
                 <div class="relative flex flex-col md:flex-row items-stretch mb-16">
                     <div class="flex items-center md:w-1/2 pl-12 md:pl-0 md:pr-12 md:text-right">
@@ -294,8 +321,8 @@
                         </div>
                     </div>
                     <div class="absolute left-4 md:left-1/2 w-3.5 h-3.5 rounded-full bg-weddingGold/80 border-4 border-weddingBeige transform -translate-x-1/2 translate-y-8"></div>
-                    <div class="hidden md:flex items-center w-1/2 pl-12">
-                        <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&q=80&w=600" alt="Comienzo" class="rounded-2xl grayscale hover:grayscale-0 transition duration-500 w-full h-56 object-cover">
+                    <div class="flex md:flex items-center w-full md:w-1/2 pl-12 md:pl-12 mt-5 md:mt-0">
+                        <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&q=80&w=600" alt="Comienzo" class="rounded-2xl grayscale hover:grayscale-0 transition duration-500 w-full h-48 md:h-56 object-cover">
                     </div>
                 </div>
 
@@ -311,8 +338,8 @@
                         </div>
                     </div>
                     <div class="absolute left-4 md:left-1/2 w-3.5 h-3.5 rounded-full bg-weddingGold/80 border-4 border-weddingBeige transform -translate-x-1/2 translate-y-8"></div>
-                    <div class="hidden md:flex items-center w-1/2 pr-12 justify-end">
-                        <img src="https://woowcordoba.es/wp-content/uploads/2022/04/shutterstock-264937217-web.jpg" alt="Córdoba de noche" class="rounded-2xl grayscale hover:grayscale-0 transition duration-500 w-full h-56 object-cover">
+                    <div class="flex md:flex items-center w-full md:w-1/2 pl-12 md:pr-12 md:pl-0 justify-start md:justify-end mt-5 md:mt-0">
+                        <img src="https://woowcordoba.es/wp-content/uploads/2022/04/shutterstock-264937217-web.jpg" alt="Córdoba de noche" class="rounded-2xl grayscale hover:grayscale-0 transition duration-500 w-full h-48 md:h-56 object-cover">
                     </div>
                 </div>
 
@@ -328,8 +355,8 @@
                         </div>
                     </div>
                     <div class="absolute left-4 md:left-1/2 w-3.5 h-3.5 rounded-full bg-weddingGold/80 border-4 border-weddingBeige transform -translate-x-1/2 translate-y-8"></div>
-                    <div class="hidden md:flex items-center w-1/2 pl-12">
-                        <img src="maldivas.jpeg" alt="Compromiso en las Maldivas" class="rounded-2xl grayscale hover:grayscale-0 transition duration-500 w-full h-56 object-cover">
+                    <div class="flex md:flex items-center w-full md:w-1/2 pl-12 md:pl-12 mt-5 md:mt-0">
+                        <img src="maldivas.jpeg" alt="Compromiso en las Maldivas" class="rounded-2xl grayscale hover:grayscale-0 transition duration-500 w-full h-48 md:h-56 object-cover">
                     </div>
                 </div>
             </div>
@@ -450,7 +477,7 @@
                         <button type="button" onclick="toggleDietaryFields()" class="inline-flex items-center text-[9px] uppercase tracking-wider text-weddingBlue font-semibold hover:text-weddingGold transition focus:outline-none">
                             <i id="dietary-icon" class="fa-regular fa-square-plus mr-2 text-sm"></i> Añadir Alergias, Intolerancias o Requerimientos de Menú
                         </button>
-                        
+
                         <div id="dietary-container" class="hidden mt-4 p-5 bg-white/60 rounded-xl border border-weddingGold/10 space-y-4">
                             <p class="text-[10px] text-weddingDark/70 font-light">Indica los requerimientos específicos de tu menú:</p>
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -544,7 +571,7 @@
                         <span>Sugerencias de los Invitados</span>
                         <span id="songs-count" class="text-[9px] bg-weddingGreenLight/30 text-weddingGreen px-3 py-1 rounded-full font-sans tracking-widest font-semibold uppercase">0 temas</span>
                     </h3>
-                    
+
                     <div id="songs-list" class="space-y-3 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar">
                         <!-- Dynamic items will be injected here -->
                     </div>
@@ -561,26 +588,24 @@
             <p class="text-xs italic text-weddingGold mb-10 font-light">Inmortalizad los momentos únicos de nuestro gran día y subid vuestras capturas preferidas</p>
             <div class="h-[1px] w-12 bg-weddingGold/40 mx-auto mb-16"></div>
 
-            <!-- Upload Dropzone Box -->
-            <div class="max-w-md mx-auto bg-white/40 p-8 rounded-3xl border border-dashed border-weddingGold/20 hover:border-weddingGreen transition duration-300 mb-16 shadow-sm">
+            <!-- Acceso al álbum compartido de Google Fotos -->
+            <div class="max-w-lg mx-auto bg-white/50 backdrop-blur-sm p-10 rounded-3xl border border-weddingGold/10 shadow-sm">
                 <div class="flex flex-col items-center">
-                    <div class="text-weddingGreen/75 text-3xl mb-4 animate-pulse">
-                        <i class="fa-solid fa-camera font-light"></i>
+                    <div class="text-weddingGreen/80 text-4xl mb-5">
+                        <i class="fa-solid fa-images font-light"></i>
                     </div>
-                    <h3 class="font-serif text-base text-weddingGreen mb-1 font-light">Comparte tu visión del día</h3>
-                    <p class="text-[10px] text-weddingDark/60 mb-6 font-light">Formatos válidos: JPG, PNG. Máx. 10MB.</p>
-                    
-                    <label class="cursor-pointer bg-weddingGreen hover:bg-weddingGold text-white text-[9px] uppercase tracking-[0.2em] font-medium px-6 py-3 rounded-full transition inline-flex items-center">
-                        <i class="fa-regular fa-folder-open mr-2"></i> Seleccionar Foto
-                        <input type="file" id="photo-upload-input" class="hidden" accept="image/*" onchange="handlePhotoUpload(event)">
-                    </label>
-                </div>
-            </div>
+                    <h3 class="font-serif text-xl text-weddingGreen mb-2 font-light">Álbum colaborativo de la boda</h3>
+                    <p class="text-xs text-weddingDark/70 mb-8 leading-relaxed font-light max-w-sm">
+                        Hemos creado un álbum compartido en Google Fotos. Pulsa el botón para ver todas las imágenes y añadir las tuyas directamente desde tu móvil. ¡Cuantas más, mejor!
+                    </p>
 
-            <!-- Reactive Photo Grid -->
-            <div class="relative max-w-5xl mx-auto">
-                <div id="photos-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <!-- Images will be rendered dynamically -->
+                    <a id="album-link" href="https://photos.app.goo.gl/TU_ENLACE_AQUI" target="_blank" rel="noopener" class="px-8 py-4 bg-weddingGreen text-white hover:bg-weddingGold transition rounded-full text-[10px] uppercase tracking-[0.25em] font-medium inline-flex items-center">
+                        <i class="fa-solid fa-cloud-arrow-up mr-2"></i> Ver y subir fotos
+                    </a>
+
+                    <p class="text-[9px] text-weddingDark/50 mt-6 font-light tracking-wide">
+                        Se abrirá en Google Fotos. Necesitarás la app o iniciar sesión para subir.
+                    </p>
                 </div>
             </div>
         </div>
@@ -644,7 +669,7 @@
         <div class="max-w-4xl mx-auto px-6 relative z-10 flex flex-col items-center">
             <h2 class="font-serif text-2xl text-weddingGold font-light italic mb-3">Marta & Pedro José</h2>
             <p class="text-[9px] uppercase tracking-[0.25em] text-white/40 mb-8">11 de Octubre de 2026 • Córdoba</p>
-            
+
             <div class="flex items-center space-x-4 mb-8">
                 <span class="h-[0.5px] w-8 bg-weddingGold/20"></span>
                 <i class="fa-regular fa-heart text-weddingGold text-sm"></i>
@@ -656,26 +681,41 @@
     </footer>
 
     <script>
+        // ================== CONFIGURACIÓN ==================
+        // Pega aquí la URL de tu Web App de Apps Script (termina en /exec).
+        // Mientras esté vacía, los formularios funcionan en modo demo (no se guardan).
+        const APPS_SCRIPT_URL = "";
+
+        // Enlace al álbum compartido de Google Fotos (o carpeta de Drive).
+        const ALBUM_URL = "https://photos.app.goo.gl/TU_ENLACE_AQUI";
+        // ===================================================
+
         // State variables for the application
         const WeddingState = {
             targetDate: new Date("October 11, 2026 17:30:00").getTime(),
             playlist: [],
-            photos: [
-                { id: 1, url: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=400", caption: "Nuestro primer viaje juntos", date: "Hace 1 año" },
-                { id: 2, url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&q=80&w=400", caption: "Atardeceres inolvidables", date: "Hace 6 meses" },
-                { id: 3, url: "https://images.unsplash.com/photo-1519225495810-7512c696505a?auto=format&fit=crop&q=80&w=400", caption: "Paseando por Córdoba", date: "Hace 3 meses" },
-                { id: 4, url: "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&q=80&w=400", caption: "El día de la pedida", date: "Hace 1 mes" }
-            ],
             chatHistory: []
         };
+
+        // Envía datos al backend sin esperar respuesta legible (evita problemas de CORS).
+        function enviarAlBackend(payload) {
+            if (!APPS_SCRIPT_URL) return Promise.resolve(); // modo demo
+            return fetch(APPS_SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(payload)
+            }).catch(err => console.error("Error enviando:", err));
+        }
 
         // Window load initialization
         window.onload = function() {
             startCountdown();
             generateFallingLeaves();
-            renderPlaylist();
-            renderPhotos();
+            cargarCanciones();
             setupIntersectionObserver();
+            const albumLink = document.getElementById("album-link");
+            if (albumLink && ALBUM_URL) albumLink.href = ALBUM_URL;
         };
 
         // --- COUNTDOWN TIMER ---
@@ -745,12 +785,16 @@
         // Toggle mobile menu visibility
         function toggleMobileMenu() {
             const menu = document.getElementById("mobile-menu");
+            const button = document.getElementById("mobile-menu-button");
             menu.classList.toggle("hidden");
+            button.classList.toggle("open");
         }
 
         document.getElementById("mobile-menu-button").addEventListener("click", () => {
             const menu = document.getElementById("mobile-menu");
+            const button = document.getElementById("mobile-menu-button");
             menu.classList.toggle("hidden");
+            button.classList.toggle("open");
         });
 
         // Copy promo code helper (Clipboard fallback)
@@ -794,13 +838,14 @@
             });
             const details = document.getElementById("diet-details").value;
 
-            console.log("Asistencia Confirmada:", {
-                guestName,
-                guestCount,
-                guestAttendance,
-                comment,
-                diets: selectedDiets,
-                dietDetails: details
+            enviarAlBackend({
+                tipo: "rsvp",
+                nombre: guestName,
+                personas: guestCount,
+                asiste: guestAttendance,
+                dietas: selectedDiets,
+                detalleDieta: details,
+                comentarios: comment
             });
 
             document.getElementById("rsvp-form").reset();
@@ -808,6 +853,26 @@
         }
 
         // --- MUSIC PLAYLIST LOGIC ---
+        // Carga las canciones desde la hoja de Google Sheets.
+        function cargarCanciones() {
+            if (!APPS_SCRIPT_URL) { renderPlaylist(); return; } // modo demo
+            fetch(APPS_SCRIPT_URL)
+                .then(r => r.json())
+                .then(data => {
+                    if (data && data.ok) {
+                        WeddingState.playlist = data.canciones.map(c => ({
+                            id: c.id,
+                            title: c.titulo,
+                            artist: c.artista,
+                            submitter: c.proponente,
+                            votes: c.votos
+                        }));
+                    }
+                    renderPlaylist();
+                })
+                .catch(err => { console.error("Error cargando canciones:", err); renderPlaylist(); });
+        }
+
         function renderPlaylist() {
             const songsList = document.getElementById("songs-list");
             const countBadge = document.getElementById("songs-count");
@@ -836,7 +901,7 @@
                         <p class="text-[10px] text-weddingDark/70 font-light">${song.artist} • <span class="italic text-[9px]">por ${song.submitter}</span></p>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <button onclick="voteSong(${song.id})" class="text-[10px] px-3 py-1 bg-white text-weddingGreen border border-weddingGold/10 hover:border-weddingGold hover:text-weddingGold hover:scale-[1.03] transition rounded-full flex items-center space-x-1.5 font-light">
+                        <button onclick="voteSong('${song.id}')" class="text-[10px] px-3 py-1 bg-white text-weddingGreen border border-weddingGold/10 hover:border-weddingGold hover:text-weddingGold hover:scale-[1.03] transition rounded-full flex items-center space-x-1.5 font-light">
                             <i class="fa-regular fa-heart"></i>
                             <span>${song.votes}</span>
                         </button>
@@ -849,9 +914,10 @@
         function voteSong(id) {
             const target = WeddingState.playlist.find(s => s.id === id);
             if (target) {
-                target.votes += 1;
+                target.votes += 1;       // suma optimista inmediata
                 renderPlaylist();
             }
+            enviarAlBackend({ tipo: "voto", id: id });
         }
 
         function handleSongSubmit(event) {
@@ -861,56 +927,28 @@
             const submitterInput = document.getElementById("song-submitter");
 
             const newSong = {
-                id: WeddingState.playlist.length + 1,
+                id: "tmp-" + Date.now(),
                 title: titleInput.value,
                 artist: artistInput.value,
                 submitter: submitterInput.value,
                 votes: 1
             };
 
+            enviarAlBackend({
+                tipo: "cancion",
+                titulo: newSong.title,
+                artista: newSong.artist,
+                proponente: newSong.submitter
+            });
+
+            // Mostramos la canción al instante y recargamos desde la hoja al rato
             WeddingState.playlist.push(newSong);
             renderPlaylist();
+            if (APPS_SCRIPT_URL) setTimeout(cargarCanciones, 1500);
 
             titleInput.value = "";
             artistInput.value = "";
             submitterInput.value = "";
-        }
-
-        // --- PHOTO ALBUM LOGIC ---
-        function renderPhotos() {
-            const grid = document.getElementById("photos-grid");
-            grid.innerHTML = "";
-
-            WeddingState.photos.forEach(photo => {
-                const item = document.createElement("div");
-                item.className = "relative group rounded-2xl overflow-hidden border border-weddingGold/10 shadow-sm transition-all duration-300 hover:scale-[1.02] h-60";
-                item.innerHTML = `
-                    <img src="${photo.url}" alt="${photo.caption}" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500">
-                    <div class="absolute inset-0 bg-gradient-to-t from-weddingDark/80 via-weddingDark/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 text-left">
-                        <p class="text-xs text-white font-medium tracking-wide">${photo.caption}</p>
-                        <p class="text-[9px] text-white/70 italic font-light">${photo.date}</p>
-                    </div>
-                `;
-                grid.appendChild(item);
-            });
-        }
-
-        function handlePhotoUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const newPhoto = {
-                    id: WeddingState.photos.length + 1,
-                    url: e.target.result,
-                    caption: "Añadida por un invitado",
-                    date: "Ahora mismo"
-                };
-                WeddingState.photos.unshift(newPhoto);
-                renderPhotos();
-            };
-            reader.readAsDataURL(file);
         }
 
         // --- AI CHATBOT ASSISTANT LOGIC ---
@@ -938,7 +976,7 @@
                 - Fecha del enlace: Domingo 11 de Octubre de 2026.
                 - Ceremonia: A las 17:30 H en la bellísima "Iglesia de Santa Marina de Aguas Santas" en Córdoba capital (Plaza de Santa Marina, s/n).
                 - Banquete / Fiesta: A partir de las 19:30 H en la romántica "Hacienda S'cultura" (Carretera Palma del Río, Km 6.8, 14005 Córdoba). Un paraje magnífico al cobijo de Sierra Morena. Se recomienda coger taxi, autobús habilitado o coche particular.
-                - Alojamiento concertado: "Hotel Puerta Osario" en pleno corazón monumental de Córdoba (Calle Osario, 7). 
+                - Alojamiento concertado: "Hotel Puerta Osario" en pleno corazón monumental de Córdoba (Calle Osario, 7).
                   * CÓDIGO PROMOCIONAL: "TRENADO". Ofrece descuento especial para los invitados.
                   * MUY IMPORTANTE: Se aplica en la parte inferior de la web oficial al seleccionar fechas y huéspedes, pulsando en el icono de promoción.
                   * REQUISITO DE ESTANCIA: Estancia mínima obligatoria de 2 noches. Teléfono: +34 957 485 411. Web oficial: https://www.hotellaboutique.com/
