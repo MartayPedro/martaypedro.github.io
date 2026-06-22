@@ -500,35 +500,22 @@
                         </select>
                     </div>
 
-                    <div class="form-step" id="step-count">
-                        <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-count">N.º de asistentes</label>
-                        <select class="w-full bg-white/70 border border-weddingGold/30 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen text-xs font-light" id="guest-count">
-                            <option value="" disabled selected>Selecciona...</option>
-                            <option value="1">Solo yo (1)</option>
-                            <option value="2">2 personas</option>
-                            <option value="3">3 personas</option>
-                            <option value="4">4 personas</option>
-                            <option value="5">5 o más</option>
-                        </select>
-                    </div>
-
                     <div class="form-step" id="step-companions">
-                        <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2">Nombres de los acompañantes</label>
+                        <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2">Acompañantes</label>
                         <div id="companions-container" class="space-y-3"></div>
+                        <button type="button" id="add-companion" class="mt-3 inline-flex items-center text-[10px] uppercase tracking-wider text-weddingGreen font-semibold border border-weddingGreen/40 rounded-full px-4 py-2 hover:bg-weddingGreen hover:text-white transition">
+                            <i class="fa-solid fa-plus mr-2"></i> Añadir acompañante
+                        </button>
+                        <p class="text-[10px] text-weddingDark/60 font-light mt-2">Si vienes en solitario, déjalo vacío.</p>
                     </div>
 
                     <div class="form-step" id="step-children">
-                        <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-children">¿Cuántos niños? (menú infantil)</label>
-                        <select class="w-full bg-white/70 border border-weddingGold/30 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen text-xs font-light" id="guest-children">
-                            <option value="" disabled selected>Selecciona...</option>
-                            <option value="0">Ninguno</option>
-                            <option value="1">1 niño/a</option>
-                            <option value="2">2 niños/as</option>
-                            <option value="3">3 niños/as</option>
-                            <option value="4">4 niños/as</option>
-                            <option value="5">5 o más</option>
-                        </select>
-                        <p class="text-[10px] text-weddingDark/60 font-light mt-2">Cuéntanos solo los niños que tomarán menú infantil. A los adolescentes inclúyelos como acompañantes.</p>
+                        <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2">Niños (menú infantil)</label>
+                        <div id="children-container" class="space-y-3"></div>
+                        <button type="button" id="add-child" class="mt-3 inline-flex items-center text-[10px] uppercase tracking-wider text-weddingGreen font-semibold border border-weddingGreen/40 rounded-full px-4 py-2 hover:bg-weddingGreen hover:text-white transition">
+                            <i class="fa-solid fa-plus mr-2"></i> Añadir niño/a
+                        </button>
+                        <p class="text-[10px] text-weddingDark/60 font-light mt-2">Añade solo niños que tomarán menú infantil. A los adolescentes inclúyelos como acompañantes.</p>
                     </div>
 
                     <div class="form-step space-y-4 pt-1" id="step-extras">
@@ -894,25 +881,43 @@
         }
 
         // --- FORMULARIO GUIADO: revelado progresivo de pasos ---
+        // Añade una fila (nombre + botón de quitar) a acompañantes o niños.
+        function addPersonRow(type) {
+            const isChild = type === "child";
+            const cont = document.getElementById(isChild ? "children-container" : "companions-container");
+            const row = document.createElement("div");
+            row.className = (isChild ? "child-row" : "companion-row") + " flex items-center gap-2";
+            row.innerHTML = `
+                <input type="text" class="${isChild ? "child-input" : "companion-input"} flex-1 bg-white/70 border border-weddingGold/30 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen text-xs font-light" placeholder="${isChild ? "Nombre del niño/a (opcional)" : "Nombre del acompañante"}">
+                <button type="button" class="remove-row flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl border border-weddingGold/30 text-weddingGreen hover:bg-weddingGreen hover:text-white transition" aria-label="Quitar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>`;
+            row.querySelector(".remove-row").addEventListener("click", () => row.remove());
+            cont.appendChild(row);
+            row.querySelector("input").focus();
+        }
+
         function setupProgressiveForm() {
             const attendance = document.getElementById("guest-attendance");
-            const count = document.getElementById("guest-count");
-            const children = document.getElementById("guest-children");
 
             const show = id => document.getElementById(id).classList.add("show");
             const hide = (...ids) => ids.forEach(id => document.getElementById(id).classList.remove("show"));
 
-            // Paso 1: según asista o no, se ramifica el formulario.
+            // Según asista o no, se ramifica el formulario.
             const commentLabel = document.getElementById("guest-comment-label");
             const commentField = document.getElementById("guest-comment");
             attendance.addEventListener("change", () => {
                 if (attendance.value === "si") {
-                    hide("step-comment", "step-submit");
                     commentLabel.textContent = "Comentarios o necesidades especiales";
                     commentField.placeholder = "Cualquier indicación que queráis contarnos...";
-                    show("step-count");
+                    show("step-companions");
+                    show("step-children");
+                    show("step-extras");
+                    show("step-diet");
+                    show("step-comment");
+                    show("step-submit");
                 } else if (attendance.value === "no") {
-                    hide("step-count", "step-companions", "step-children", "step-extras", "step-diet");
+                    hide("step-companions", "step-children", "step-extras", "step-diet");
                     commentLabel.textContent = "¿Nos cuentas el motivo? (opcional)";
                     commentField.placeholder = "Nos encantaría saber por qué no podrás acompañarnos, ¡pero no es obligatorio!";
                     show("step-comment");
@@ -920,45 +925,8 @@
                 }
             });
 
-            // Genera un cuadro de texto por cada acompañante (total de asistentes - 1).
-            function renderCompanionFields(total) {
-                const cont = document.getElementById("companions-container");
-                cont.innerHTML = "";
-                const num = total - 1; // descontamos a la persona que rellena
-                for (let i = 1; i <= num; i++) {
-                    const input = document.createElement("input");
-                    input.type = "text";
-                    input.className = "companion-input w-full bg-white/70 border border-weddingGold/30 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen text-xs font-light";
-                    input.placeholder = "Nombre del acompañante " + i;
-                    cont.appendChild(input);
-                }
-                if (total >= 5) {
-                    const note = document.createElement("p");
-                    note.className = "text-[10px] text-weddingDark/60 font-light";
-                    note.textContent = "Si sois más de 5, añade los nombres restantes en los comentarios.";
-                    cont.appendChild(note);
-                }
-            }
-
-            // Paso 3: n.º de asistentes -> nombres (si >1) y luego niños.
-            count.addEventListener("change", () => {
-                if (Number(count.value) > 1) {
-                    renderCompanionFields(Number(count.value));
-                    show("step-companions");
-                } else {
-                    document.getElementById("companions-container").innerHTML = "";
-                    hide("step-companions");
-                }
-                show("step-children");
-            });
-
-            // Paso 4: niños -> menú infantil (si procede), autobús, alergias, comentarios y enviar.
-            children.addEventListener("change", () => {
-                show("step-extras");
-                show("step-diet");
-                show("step-comment");
-                show("step-submit");
-            });
+            document.getElementById("add-companion").addEventListener("click", () => addPersonRow("companion"));
+            document.getElementById("add-child").addEventListener("click", () => addPersonRow("child"));
         }
 
         // --- RSVP FORM LOGIC ---
@@ -986,8 +954,9 @@
             document.querySelectorAll(".companion-input").forEach((inp, idx) => {
                 people.push(inp.value.trim() || ("Acompañante " + (idx + 1)));
             });
-            const childCount = Number(document.getElementById("guest-children").value) || 0;
-            for (let i = 1; i <= childCount; i++) people.push("Niño/a " + i);
+            document.querySelectorAll(".child-input").forEach((inp, idx) => {
+                people.push(inp.value.trim() || ("Niño/a " + (idx + 1)));
+            });
 
             // Conservamos lo ya marcado si se reabre (por nombre de comensal).
             const previous = {};
@@ -1021,12 +990,13 @@
         function handleRSVPSubmit(event) {
             event.preventDefault();
             const guestName = document.getElementById("guest-name").value;
-            const guestCount = document.getElementById("guest-count").value;
+            const companionInputs = Array.from(document.querySelectorAll(".companion-input"));
+            const childInputs = Array.from(document.querySelectorAll(".child-input"));
+            const guestCount = String(1 + companionInputs.length); // tú + acompañantes
             const guestAttendance = document.getElementById("guest-attendance").value;
-            const guestCompanions = Array.from(document.querySelectorAll(".companion-input"))
-                .map(i => i.value.trim()).filter(Boolean).join(", ");
-            const guestChildren = document.getElementById("guest-children").value;
-            const kidsMenu = document.getElementById("guest-children").value || "0"; // nº de niños = nº de menús infantiles
+            const guestCompanions = companionInputs.map(i => i.value.trim()).filter(Boolean).join(", ");
+            const guestChildren = String(childInputs.length);
+            const kidsMenu = String(childInputs.length); // nº de niños = nº de menús infantiles
             const needsBus = document.getElementById("guest-bus").checked;
             const comment = document.getElementById("guest-comment").value;
 
@@ -1057,6 +1027,7 @@
             // Reiniciamos el formulario guiado ocultando de nuevo todos los pasos.
             document.querySelectorAll(".form-step").forEach(s => s.classList.remove("show"));
             document.getElementById("companions-container").innerHTML = "";
+            document.getElementById("children-container").innerHTML = "";
             document.getElementById("diet-people").innerHTML = "";
             document.getElementById("dietary-container").classList.add("hidden");
             document.getElementById("dietary-icon").className = "fa-regular fa-square-plus mr-2 text-sm";
