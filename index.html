@@ -580,8 +580,8 @@
                     </div>
 
                     <div class="form-step" id="step-comment">
-                        <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-comment">Comentarios o necesidades especiales</label>
-                        <textarea class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" id="guest-comment" rows="3" placeholder="Cualquier indicación que queráis contarnos..."></textarea>
+                        <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-comment" id="guest-comment-label">Comentarios o necesidades especiales</label>
+                        <textarea class="w-full bg-white/90 border border-weddingGold/30 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" id="guest-comment" rows="3" placeholder="Cualquier indicación que queráis contarnos..."></textarea>
                     </div>
 
                     <div class="form-step" id="step-submit">
@@ -932,12 +932,18 @@
             const hide = (...ids) => ids.forEach(id => document.getElementById(id).classList.remove("show"));
 
             // Paso 1: según asista o no, se ramifica el formulario.
+            const commentLabel = document.getElementById("guest-comment-label");
+            const commentField = document.getElementById("guest-comment");
             attendance.addEventListener("change", () => {
                 if (attendance.value === "si") {
                     hide("step-comment", "step-submit");
+                    commentLabel.textContent = "Comentarios o necesidades especiales";
+                    commentField.placeholder = "Cualquier indicación que queráis contarnos...";
                     show("step-count");
                 } else if (attendance.value === "no") {
                     hide("step-count", "step-companions", "step-children", "step-extras", "step-diet");
+                    commentLabel.textContent = "¿Nos cuentas el motivo? (opcional)";
+                    commentField.placeholder = "Nos encantaría saber por qué no podrás acompañarnos, ¡pero no es obligatorio!";
                     show("step-comment");
                     show("step-submit");
                 }
