@@ -474,27 +474,55 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-count">Número de acompañantes</label>
+                            <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-count">N.º de asistentes</label>
                             <select class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" id="guest-count" required>
-                                <option value="1">Asistiré en solitario (1 persona)</option>
-                                <option value="2">Asistiremos dos (2 personas)</option>
-                                <option value="3">Familia (3 personas)</option>
-                                <option value="4">Familia (4 personas)</option>
-                                <option value="5">Familia o grupo (5+ personas)</option>
+                                <option value="1">Solo yo (1)</option>
+                                <option value="2">2 personas</option>
+                                <option value="3">3 personas</option>
+                                <option value="4">4 personas</option>
+                                <option value="5">5 o más</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-attendance">¿Podrás asistir?</label>
                             <select class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" id="guest-attendance" required>
-                                <option value="si">¡Sí, allí estaré celebrando! ✨</option>
-                                <option value="no">Lamentablemente no puedo asistir 🕊️</option>
+                                <option value="si">¡Sí, allí estaré! ✨</option>
+                                <option value="no">No podré asistir 🕊️</option>
                             </select>
                         </div>
                     </div>
 
+                    <div>
+                        <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-companions">Nombres de los acompañantes</label>
+                        <input class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" type="text" id="guest-companions" placeholder="Ej. Juan García, Lucía Pérez...">
+                        <p class="text-[10px] text-weddingDark/60 font-light mt-2">Déjalo en blanco si vienes en solitario.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-children">Niños que asisten</label>
+                        <select class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" id="guest-children">
+                            <option value="0">Ninguno</option>
+                            <option value="1">1 niño/a</option>
+                            <option value="2">2 niños/as</option>
+                            <option value="3">3 niños/as</option>
+                            <option value="4">4 o más</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-3 pt-1">
+                        <label class="flex items-center space-x-3 text-xs text-weddingDark/80 font-light cursor-pointer">
+                            <input type="checkbox" id="guest-kids-menu" class="rounded border-weddingGold/30 text-weddingGreen focus:ring-weddingGreen">
+                            <span>Algún niño/a necesitará menú infantil</span>
+                        </label>
+                        <label class="flex items-center space-x-3 text-xs text-weddingDark/80 font-light cursor-pointer">
+                            <input type="checkbox" id="guest-bus" class="rounded border-weddingGold/30 text-weddingGreen focus:ring-weddingGreen">
+                            <span>Necesitaré plaza de autobús (Córdoba ⇄ Hacienda)</span>
+                        </label>
+                    </div>
+
                     <!-- Dietary Restrictions Button toggler to reveal beautiful sub-fields -->
                     <div>
-                        <button type="button" onclick="toggleDietaryFields()" class="inline-flex items-center text-[9px] uppercase tracking-wider text-weddingBlue font-semibold hover:text-weddingGold transition focus:outline-none">
+                        <button type="button" onclick="toggleDietaryFields()" class="flex w-full items-center text-[9px] uppercase tracking-wider text-weddingBlue font-semibold hover:text-weddingGold transition focus:outline-none text-left">
                             <i id="dietary-icon" class="fa-regular fa-square-plus mr-2 text-sm"></i> Añadir Alergias, Intolerancias o Requerimientos de Menú
                         </button>
 
@@ -534,7 +562,7 @@
 
                     <div>
                         <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-comment">Comentarios o necesidades especiales</label>
-                        <textarea class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" id="guest-comment" rows="3" placeholder="Por ejemplo: si necesitas menú infantil, plaza de autobús o alguna indicación de interés..."></textarea>
+                        <textarea class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" id="guest-comment" rows="3" placeholder="Cualquier indicación que queráis contarnos..."></textarea>
                     </div>
 
                     <button type="submit" class="w-full py-4 bg-weddingGreen text-white text-[10px] uppercase tracking-[0.25em] font-medium rounded-xl hover:bg-weddingGold transition duration-300">
@@ -889,6 +917,10 @@
             const guestName = document.getElementById("guest-name").value;
             const guestCount = document.getElementById("guest-count").value;
             const guestAttendance = document.getElementById("guest-attendance").value;
+            const guestCompanions = document.getElementById("guest-companions").value;
+            const guestChildren = document.getElementById("guest-children").value;
+            const kidsMenu = document.getElementById("guest-kids-menu").checked;
+            const needsBus = document.getElementById("guest-bus").checked;
             const comment = document.getElementById("guest-comment").value;
 
             const selectedDiets = [];
@@ -902,6 +934,10 @@
                 nombre: guestName,
                 personas: guestCount,
                 asiste: guestAttendance,
+                acompanantes: guestCompanions,
+                ninos: guestChildren,
+                menuInfantil: kidsMenu,
+                autobus: needsBus,
                 dietas: selectedDiets,
                 detalleDieta: details,
                 comentarios: comment
