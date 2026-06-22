@@ -92,6 +92,7 @@
             margin-top: 1.5rem;
             transform: translateY(0);
             pointer-events: auto;
+            overflow: visible; /* evita que el halo de foco se recorte por los lados */
         }
 
         /* Despliegue animado del menú móvil (deslizamiento + desvanecido). */
@@ -487,12 +488,12 @@
                 <form id="rsvp-form" onsubmit="handleRSVPSubmit(event)">
                     <div>
                         <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-name">Nombre completo</label>
-                        <input class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" type="text" id="guest-name" placeholder="Ej. Ana Pérez García" required>
+                        <input class="w-full bg-white/70 border border-weddingGold/30 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen text-xs font-light" type="text" id="guest-name" placeholder="Ej. Ana Pérez García" required>
                     </div>
 
                     <div class="form-step show" id="step-attendance">
                         <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-attendance">¿Podrás asistir?</label>
-                        <select class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" id="guest-attendance">
+                        <select class="w-full bg-white/70 border border-weddingGold/30 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen text-xs font-light" id="guest-attendance">
                             <option value="" disabled selected>Selecciona una opción...</option>
                             <option value="si">¡Sí, allí estaré! ✨</option>
                             <option value="no">No podré asistir 🕊️</option>
@@ -501,7 +502,7 @@
 
                     <div class="form-step" id="step-count">
                         <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-count">N.º de asistentes</label>
-                        <select class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" id="guest-count">
+                        <select class="w-full bg-white/70 border border-weddingGold/30 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen text-xs font-light" id="guest-count">
                             <option value="" disabled selected>Selecciona...</option>
                             <option value="1">Solo yo (1)</option>
                             <option value="2">2 personas</option>
@@ -513,12 +514,12 @@
 
                     <div class="form-step" id="step-companions">
                         <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-companions">Nombres de los acompañantes</label>
-                        <input class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" type="text" id="guest-companions" placeholder="Ej. Juan García, Lucía Pérez...">
+                        <input class="w-full bg-white/70 border border-weddingGold/30 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen text-xs font-light" type="text" id="guest-companions" placeholder="Ej. Juan García, Lucía Pérez...">
                     </div>
 
                     <div class="form-step" id="step-children">
                         <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-children">¿Asisten niños?</label>
-                        <select class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" id="guest-children">
+                        <select class="w-full bg-white/70 border border-weddingGold/30 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen text-xs font-light" id="guest-children">
                             <option value="" disabled selected>Selecciona...</option>
                             <option value="0">Ninguno</option>
                             <option value="1">1 niño/a</option>
@@ -723,7 +724,7 @@
                 <!-- Chat Input area -->
                 <div class="bg-white/80 border-t border-weddingGold/10 p-4">
                     <form id="chat-form" onsubmit="handleChatSubmit(event)" class="flex space-x-2">
-                        <input type="text" id="chat-input" placeholder="Pregúntame sobre la boda..." class="flex-1 bg-white/60 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light">
+                        <input type="text" id="chat-input" placeholder="Pregúntame sobre la boda..." class="flex-1 bg-white/60 border border-weddingGold/30 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen text-xs font-light">
                         <button type="submit" class="bg-weddingGreen hover:bg-weddingGold text-white px-5 py-3 rounded-xl transition duration-300 shadow-sm">
                             <i class="fa-solid fa-paper-plane text-xs"></i>
                         </button>
