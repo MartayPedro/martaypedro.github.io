@@ -513,8 +513,8 @@
                     </div>
 
                     <div class="form-step" id="step-companions">
-                        <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-companions">Nombres de los acompañantes</label>
-                        <input class="w-full bg-white/70 border border-weddingGold/30 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen text-xs font-light" type="text" id="guest-companions" placeholder="Ej. Juan García, Lucía Pérez...">
+                        <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2">Nombres de los acompañantes</label>
+                        <div id="companions-container" class="space-y-3"></div>
                     </div>
 
                     <div class="form-step" id="step-children">
@@ -950,10 +950,35 @@
                 }
             });
 
+            // Genera un cuadro de texto por cada acompañante (total de asistentes - 1).
+            function renderCompanionFields(total) {
+                const cont = document.getElementById("companions-container");
+                cont.innerHTML = "";
+                const num = total - 1; // descontamos a la persona que rellena
+                for (let i = 1; i <= num; i++) {
+                    const input = document.createElement("input");
+                    input.type = "text";
+                    input.className = "companion-input w-full bg-white/70 border border-weddingGold/30 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen text-xs font-light";
+                    input.placeholder = "Nombre del acompañante " + i;
+                    cont.appendChild(input);
+                }
+                if (total >= 5) {
+                    const note = document.createElement("p");
+                    note.className = "text-[10px] text-weddingDark/60 font-light";
+                    note.textContent = "Si sois más de 5, añade los nombres restantes en los comentarios.";
+                    cont.appendChild(note);
+                }
+            }
+
             // Paso 3: n.º de asistentes -> nombres (si >1) y luego niños.
             count.addEventListener("change", () => {
-                if (Number(count.value) > 1) show("step-companions");
-                else hide("step-companions");
+                if (Number(count.value) > 1) {
+                    renderCompanionFields(Number(count.value));
+                    show("step-companions");
+                } else {
+                    document.getElementById("companions-container").innerHTML = "";
+                    hide("step-companions");
+                }
                 show("step-children");
             });
 
@@ -992,7 +1017,8 @@
             const guestName = document.getElementById("guest-name").value;
             const guestCount = document.getElementById("guest-count").value;
             const guestAttendance = document.getElementById("guest-attendance").value;
-            const guestCompanions = document.getElementById("guest-companions").value;
+            const guestCompanions = Array.from(document.querySelectorAll(".companion-input"))
+                .map(i => i.value.trim()).filter(Boolean).join(", ");
             const guestChildren = document.getElementById("guest-children").value;
             const kidsMenu = document.getElementById("guest-kids-menu").checked;
             const needsBus = document.getElementById("guest-bus").checked;
@@ -1021,6 +1047,7 @@
             document.getElementById("rsvp-form").reset();
             // Reiniciamos el formulario guiado ocultando de nuevo todos los pasos.
             document.querySelectorAll(".form-step").forEach(s => s.classList.remove("show"));
+            document.getElementById("companions-container").innerHTML = "";
             document.getElementById("step-attendance").classList.add("show");
             const kidsLabel = document.getElementById("kids-menu-label");
             kidsLabel.classList.add("hidden");
