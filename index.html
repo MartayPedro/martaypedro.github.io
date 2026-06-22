@@ -516,6 +516,15 @@
                             <i class="fa-solid fa-plus mr-2"></i> Añadir niño/a
                         </button>
                         <p class="text-[10px] text-weddingDark/60 font-light mt-2">Añade solo niños que tomarán menú infantil. A los adolescentes inclúyelos como acompañantes.</p>
+
+                        <div class="mt-5">
+                            <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2">Bebés (necesitan trona)</label>
+                            <div id="babies-container" class="space-y-3"></div>
+                            <button type="button" id="add-baby" class="mt-3 inline-flex items-center text-[10px] uppercase tracking-wider text-weddingGreen font-semibold border border-weddingGreen/40 rounded-full px-4 py-2 hover:bg-weddingGreen hover:text-white transition">
+                                <i class="fa-solid fa-plus mr-2"></i> Añadir bebé
+                            </button>
+                            <p class="text-[10px] text-weddingDark/60 font-light mt-2">Para reservarles trona. No llevan menú.</p>
+                        </div>
                     </div>
 
                     <div class="form-step space-y-4 pt-1" id="step-extras">
@@ -523,6 +532,7 @@
                             <input type="checkbox" id="guest-bus" class="rounded border-weddingGold/30 text-weddingGreen focus:ring-weddingGreen">
                             <span>Necesitaré plaza de autobús (Córdoba ⇄ Hacienda)</span>
                         </label>
+                        <p id="bus-count-note" class="hidden text-[10px] text-weddingBlue font-light"></p>
                     </div>
 
                     <!-- Dietary Restrictions Button toggler to reveal beautiful sub-fields -->
@@ -881,20 +891,41 @@
         }
 
         // --- FORMULARIO GUIADO: revelado progresivo de pasos ---
-        // Añade una fila (nombre + botón de quitar) a acompañantes o niños.
+        // Añade una fila (nombre + botón de quitar) a acompañantes, niños o bebés.
         function addPersonRow(type) {
-            const isChild = type === "child";
-            const cont = document.getElementById(isChild ? "children-container" : "companions-container");
+            const cfg = {
+                companion: { cont: "companions-container", cls: "companion-input", placeholder: "Nombre del acompañante" },
+                child:     { cont: "children-container",   cls: "child-input",     placeholder: "Nombre del niño/a (opcional)" },
+                baby:      { cont: "babies-container",     cls: "baby-input",      placeholder: "Nombre del bebé (opcional)" }
+            }[type];
+            const cont = document.getElementById(cfg.cont);
             const row = document.createElement("div");
-            row.className = (isChild ? "child-row" : "companion-row") + " flex items-center gap-2";
+            row.className = "flex items-center gap-2";
             row.innerHTML = `
-                <input type="text" class="${isChild ? "child-input" : "companion-input"} flex-1 bg-white/70 border border-weddingGold/30 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen text-xs font-light" placeholder="${isChild ? "Nombre del niño/a (opcional)" : "Nombre del acompañante"}">
+                <input type="text" class="${cfg.cls} flex-1 bg-white/70 border border-weddingGold/30 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen text-xs font-light" placeholder="${cfg.placeholder}">
                 <button type="button" class="remove-row flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl border border-weddingGold/30 text-weddingGreen hover:bg-weddingGreen hover:text-white transition" aria-label="Quitar">
                     <i class="fa-solid fa-xmark"></i>
                 </button>`;
-            row.querySelector(".remove-row").addEventListener("click", () => row.remove());
+            row.querySelector(".remove-row").addEventListener("click", () => { row.remove(); updateBusNote(); });
             cont.appendChild(row);
             row.querySelector("input").focus();
+            updateBusNote();
+        }
+
+        // Muestra cuántas plazas de bus se reservarán (tú + acompañantes + niños).
+        function updateBusNote() {
+            const note = document.getElementById("bus-count-note");
+            const bus = document.getElementById("guest-bus");
+            if (!note || !bus) return;
+            const total = 1
+                + document.querySelectorAll(".companion-input").length
+                + document.querySelectorAll(".child-input").length;
+            if (bus.checked) {
+                note.textContent = "Reservaremos " + total + (total === 1 ? " plaza" : " plazas") + " (tú + acompañantes + niños).";
+                note.classList.remove("hidden");
+            } else {
+                note.classList.add("hidden");
+            }
         }
 
         function setupProgressiveForm() {
@@ -927,6 +958,8 @@
 
             document.getElementById("add-companion").addEventListener("click", () => addPersonRow("companion"));
             document.getElementById("add-child").addEventListener("click", () => addPersonRow("child"));
+            document.getElementById("add-baby").addEventListener("click", () => addPersonRow("baby"));
+            document.getElementById("guest-bus").addEventListener("change", updateBusNote);
         }
 
         // --- RSVP FORM LOGIC ---
@@ -992,12 +1025,15 @@
             const guestName = document.getElementById("guest-name").value;
             const companionInputs = Array.from(document.querySelectorAll(".companion-input"));
             const childInputs = Array.from(document.querySelectorAll(".child-input"));
+            const babyInputs = Array.from(document.querySelectorAll(".baby-input"));
             const guestCount = String(1 + companionInputs.length); // tú + acompañantes
             const guestAttendance = document.getElementById("guest-attendance").value;
             const guestCompanions = companionInputs.map(i => i.value.trim()).filter(Boolean).join(", ");
             const guestChildren = String(childInputs.length);
             const kidsMenu = String(childInputs.length); // nº de niños = nº de menús infantiles
+            const guestBabies = String(babyInputs.length); // bebés = tronas, sin menú
             const needsBus = document.getElementById("guest-bus").checked;
+            const busSeats = needsBus ? String(1 + companionInputs.length + childInputs.length) : "0";
             const comment = document.getElementById("guest-comment").value;
 
             // Alérgenos por comensal.
@@ -1018,7 +1054,10 @@
                 acompanantes: guestCompanions,
                 ninos: guestChildren,
                 menuInfantil: kidsMenu,
+                bebes: guestBabies,
+                tronas: guestBabies,
                 autobus: needsBus,
+                autobusPlazas: busSeats,
                 alergias: alergias,
                 comentarios: comment
             });
@@ -1028,6 +1067,8 @@
             document.querySelectorAll(".form-step").forEach(s => s.classList.remove("show"));
             document.getElementById("companions-container").innerHTML = "";
             document.getElementById("children-container").innerHTML = "";
+            document.getElementById("babies-container").innerHTML = "";
+            document.getElementById("bus-count-note").classList.add("hidden");
             document.getElementById("diet-people").innerHTML = "";
             document.getElementById("dietary-container").classList.add("hidden");
             document.getElementById("dietary-icon").className = "fa-regular fa-square-plus mr-2 text-sm";
