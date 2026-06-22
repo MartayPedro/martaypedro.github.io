@@ -76,6 +76,24 @@
         /* El cuerpo de texto (text-xs) un poco mayor para lectura cómoda en móvil. */
         body [class~="text-xs"] { font-size: 0.85rem !important; }
 
+        /* Formulario guiado: cada paso aparece con un despliegue suave. */
+        .form-step {
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            margin-top: 0;
+            transform: translateY(-6px);
+            transition: max-height 0.5s ease, opacity 0.45s ease, margin-top 0.45s ease, transform 0.45s ease;
+            pointer-events: none;
+        }
+        .form-step.show {
+            max-height: 600px;
+            opacity: 1;
+            margin-top: 1.5rem;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
         /* Despliegue animado del menú móvil (deslizamiento + desvanecido). */
         #mobile-menu {
             overflow: hidden;
@@ -466,41 +484,42 @@
             <div class="h-[1px] w-12 bg-weddingGold/40 mx-auto mb-16"></div>
 
             <div class="bg-white/40 backdrop-blur-sm rounded-3xl p-5 md:p-12 max-w-2xl mx-auto border border-weddingGold/10 text-left shadow-sm">
-                <form id="rsvp-form" onsubmit="handleRSVPSubmit(event)" class="space-y-6">
+                <form id="rsvp-form" onsubmit="handleRSVPSubmit(event)">
                     <div>
                         <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-name">Nombre completo</label>
                         <input class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" type="text" id="guest-name" placeholder="Ej. Ana Pérez García" required>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-count">N.º de asistentes</label>
-                            <select class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" id="guest-count" required>
-                                <option value="1">Solo yo (1)</option>
-                                <option value="2">2 personas</option>
-                                <option value="3">3 personas</option>
-                                <option value="4">4 personas</option>
-                                <option value="5">5 o más</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-attendance">¿Podrás asistir?</label>
-                            <select class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" id="guest-attendance" required>
-                                <option value="si">¡Sí, allí estaré! ✨</option>
-                                <option value="no">No podré asistir 🕊️</option>
-                            </select>
-                        </div>
+                    <div class="form-step" id="step-attendance">
+                        <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-attendance">¿Podrás asistir?</label>
+                        <select class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" id="guest-attendance">
+                            <option value="" disabled selected>Selecciona una opción...</option>
+                            <option value="si">¡Sí, allí estaré! ✨</option>
+                            <option value="no">No podré asistir 🕊️</option>
+                        </select>
                     </div>
 
-                    <div>
+                    <div class="form-step" id="step-count">
+                        <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-count">N.º de asistentes</label>
+                        <select class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" id="guest-count">
+                            <option value="" disabled selected>Selecciona...</option>
+                            <option value="1">Solo yo (1)</option>
+                            <option value="2">2 personas</option>
+                            <option value="3">3 personas</option>
+                            <option value="4">4 personas</option>
+                            <option value="5">5 o más</option>
+                        </select>
+                    </div>
+
+                    <div class="form-step" id="step-companions">
                         <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-companions">Nombres de los acompañantes</label>
                         <input class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" type="text" id="guest-companions" placeholder="Ej. Juan García, Lucía Pérez...">
-                        <p class="text-[10px] text-weddingDark/60 font-light mt-2">Déjalo en blanco si vienes en solitario.</p>
                     </div>
 
-                    <div>
-                        <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-children">Niños que asisten</label>
+                    <div class="form-step" id="step-children">
+                        <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-children">¿Asisten niños?</label>
                         <select class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" id="guest-children">
+                            <option value="" disabled selected>Selecciona...</option>
                             <option value="0">Ninguno</option>
                             <option value="1">1 niño/a</option>
                             <option value="2">2 niños/as</option>
@@ -509,8 +528,8 @@
                         </select>
                     </div>
 
-                    <div class="space-y-3 pt-1">
-                        <label class="flex items-center space-x-3 text-xs text-weddingDark/80 font-light cursor-pointer">
+                    <div class="form-step space-y-3 pt-1" id="step-extras">
+                        <label id="kids-menu-label" class="hidden items-center space-x-3 text-xs text-weddingDark/80 font-light cursor-pointer">
                             <input type="checkbox" id="guest-kids-menu" class="rounded border-weddingGold/30 text-weddingGreen focus:ring-weddingGreen">
                             <span>Algún niño/a necesitará menú infantil</span>
                         </label>
@@ -521,7 +540,7 @@
                     </div>
 
                     <!-- Dietary Restrictions Button toggler to reveal beautiful sub-fields -->
-                    <div>
+                    <div class="form-step" id="step-diet">
                         <button type="button" onclick="toggleDietaryFields()" class="flex w-full items-center text-[9px] uppercase tracking-wider text-weddingBlue font-semibold hover:text-weddingGold transition focus:outline-none text-left">
                             <i id="dietary-icon" class="fa-regular fa-square-plus mr-2 text-sm"></i> Añadir Alergias, Intolerancias o Requerimientos de Menú
                         </button>
@@ -560,14 +579,16 @@
                         </div>
                     </div>
 
-                    <div>
+                    <div class="form-step" id="step-comment">
                         <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-comment">Comentarios o necesidades especiales</label>
                         <textarea class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" id="guest-comment" rows="3" placeholder="Cualquier indicación que queráis contarnos..."></textarea>
                     </div>
 
-                    <button type="submit" class="w-full py-4 bg-weddingGreen text-white text-[10px] uppercase tracking-[0.25em] font-medium rounded-xl hover:bg-weddingGold transition duration-300">
-                        Enviar Formulario de Confirmación
-                    </button>
+                    <div class="form-step" id="step-submit">
+                        <button type="submit" class="w-full py-4 bg-weddingGreen text-white text-[10px] uppercase tracking-[0.25em] font-medium rounded-xl hover:bg-weddingGold transition duration-300">
+                            Enviar Formulario de Confirmación
+                        </button>
+                    </div>
                 </form>
 
                 <!-- Success Message Container -->
@@ -763,6 +784,7 @@
             cargarCanciones();
             setupIntersectionObserver();
             setupSmoothScroll();
+            setupProgressiveForm();
             const albumLink = document.getElementById("album-link");
             if (albumLink && ALBUM_URL) albumLink.href = ALBUM_URL;
         };
@@ -900,6 +922,64 @@
             }, 2500);
         }
 
+        // --- FORMULARIO GUIADO: revelado progresivo de pasos ---
+        function setupProgressiveForm() {
+            const name = document.getElementById("guest-name");
+            const attendance = document.getElementById("guest-attendance");
+            const count = document.getElementById("guest-count");
+            const children = document.getElementById("guest-children");
+
+            const show = id => document.getElementById(id).classList.add("show");
+            const hide = (...ids) => ids.forEach(id => document.getElementById(id).classList.remove("show"));
+
+            const tail = ["step-count", "step-companions", "step-children", "step-extras", "step-diet", "step-comment", "step-submit"];
+
+            // Paso 1: al escribir el nombre aparece "¿Podrás asistir?"
+            name.addEventListener("input", () => {
+                if (name.value.trim() !== "") {
+                    show("step-attendance");
+                } else {
+                    hide("step-attendance", ...tail);
+                }
+            });
+
+            // Paso 2: según asista o no, se ramifica el formulario.
+            attendance.addEventListener("change", () => {
+                if (attendance.value === "si") {
+                    hide("step-comment", "step-submit");
+                    show("step-count");
+                } else if (attendance.value === "no") {
+                    hide("step-count", "step-companions", "step-children", "step-extras", "step-diet");
+                    show("step-comment");
+                    show("step-submit");
+                }
+            });
+
+            // Paso 3: n.º de asistentes -> nombres (si >1) y luego niños.
+            count.addEventListener("change", () => {
+                if (Number(count.value) > 1) show("step-companions");
+                else hide("step-companions");
+                show("step-children");
+            });
+
+            // Paso 4: niños -> menú infantil (si procede), autobús, alergias, comentarios y enviar.
+            children.addEventListener("change", () => {
+                const kidsLabel = document.getElementById("kids-menu-label");
+                if (Number(children.value) > 0) {
+                    kidsLabel.classList.remove("hidden");
+                    kidsLabel.classList.add("flex");
+                } else {
+                    kidsLabel.classList.add("hidden");
+                    kidsLabel.classList.remove("flex");
+                    document.getElementById("guest-kids-menu").checked = false;
+                }
+                show("step-extras");
+                show("step-diet");
+                show("step-comment");
+                show("step-submit");
+            });
+        }
+
         // --- RSVP FORM LOGIC ---
         function toggleDietaryFields() {
             const container = document.getElementById("dietary-container");
@@ -944,6 +1024,11 @@
             });
 
             document.getElementById("rsvp-form").reset();
+            // Reiniciamos el formulario guiado ocultando de nuevo todos los pasos.
+            document.querySelectorAll(".form-step").forEach(s => s.classList.remove("show"));
+            const kidsLabel = document.getElementById("kids-menu-label");
+            kidsLabel.classList.add("hidden");
+            kidsLabel.classList.remove("flex");
             document.getElementById("success-modal").classList.remove("hidden");
         }
 
