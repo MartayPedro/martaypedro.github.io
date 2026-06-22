@@ -490,7 +490,7 @@
                         <input class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" type="text" id="guest-name" placeholder="Ej. Ana Pérez García" required>
                     </div>
 
-                    <div class="form-step" id="step-attendance">
+                    <div class="form-step show" id="step-attendance">
                         <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-attendance">¿Podrás asistir?</label>
                         <select class="w-full bg-white/70 border border-weddingGold/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-weddingGreen text-xs font-light" id="guest-attendance">
                             <option value="" disabled selected>Selecciona una opción...</option>
@@ -924,7 +924,6 @@
 
         // --- FORMULARIO GUIADO: revelado progresivo de pasos ---
         function setupProgressiveForm() {
-            const name = document.getElementById("guest-name");
             const attendance = document.getElementById("guest-attendance");
             const count = document.getElementById("guest-count");
             const children = document.getElementById("guest-children");
@@ -932,18 +931,7 @@
             const show = id => document.getElementById(id).classList.add("show");
             const hide = (...ids) => ids.forEach(id => document.getElementById(id).classList.remove("show"));
 
-            const tail = ["step-count", "step-companions", "step-children", "step-extras", "step-diet", "step-comment", "step-submit"];
-
-            // Paso 1: al escribir el nombre aparece "¿Podrás asistir?"
-            name.addEventListener("input", () => {
-                if (name.value.trim() !== "") {
-                    show("step-attendance");
-                } else {
-                    hide("step-attendance", ...tail);
-                }
-            });
-
-            // Paso 2: según asista o no, se ramifica el formulario.
+            // Paso 1: según asista o no, se ramifica el formulario.
             attendance.addEventListener("change", () => {
                 if (attendance.value === "si") {
                     hide("step-comment", "step-submit");
@@ -1026,6 +1014,7 @@
             document.getElementById("rsvp-form").reset();
             // Reiniciamos el formulario guiado ocultando de nuevo todos los pasos.
             document.querySelectorAll(".form-step").forEach(s => s.classList.remove("show"));
+            document.getElementById("step-attendance").classList.add("show");
             const kidsLabel = document.getElementById("kids-menu-label");
             kidsLabel.classList.add("hidden");
             kidsLabel.classList.remove("flex");
