@@ -518,22 +518,20 @@
                     </div>
 
                     <div class="form-step" id="step-children">
-                        <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-children">¿Asisten niños?</label>
+                        <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-children">¿Cuántos niños? (menú infantil)</label>
                         <select class="w-full bg-white/70 border border-weddingGold/30 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen text-xs font-light" id="guest-children">
                             <option value="" disabled selected>Selecciona...</option>
                             <option value="0">Ninguno</option>
                             <option value="1">1 niño/a</option>
                             <option value="2">2 niños/as</option>
                             <option value="3">3 niños/as</option>
-                            <option value="4">4 o más</option>
+                            <option value="4">4 niños/as</option>
+                            <option value="5">5 o más</option>
                         </select>
+                        <p class="text-[10px] text-weddingDark/60 font-light mt-2">Cuéntanos solo los niños que tomarán menú infantil. A los adolescentes inclúyelos como acompañantes.</p>
                     </div>
 
                     <div class="form-step space-y-4 pt-1" id="step-extras">
-                        <div id="kids-menu-wrap" class="hidden">
-                            <label class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-2" for="guest-kids-menu-count">¿Cuántos querrán menú infantil?</label>
-                            <select id="guest-kids-menu-count" class="w-full bg-white/70 border border-weddingGold/30 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen text-xs font-light"></select>
-                        </div>
                         <label class="flex items-center space-x-3 text-xs text-weddingDark/80 font-light cursor-pointer">
                             <input type="checkbox" id="guest-bus" class="rounded border-weddingGold/30 text-weddingGreen focus:ring-weddingGreen">
                             <span>Necesitaré plaza de autobús (Córdoba ⇄ Hacienda)</span>
@@ -984,22 +982,6 @@
 
             // Paso 4: niños -> menú infantil (si procede), autobús, alergias, comentarios y enviar.
             children.addEventListener("change", () => {
-                const kidsWrap = document.getElementById("kids-menu-wrap");
-                const kidsSelect = document.getElementById("guest-kids-menu-count");
-                const n = Number(children.value);
-                if (n > 0) {
-                    kidsSelect.innerHTML = "";
-                    for (let i = 0; i <= n; i++) {
-                        const o = document.createElement("option");
-                        o.value = i;
-                        o.textContent = i === 0 ? "Ninguno" : (i === 1 ? "1 niño/a" : i + " niños/as");
-                        kidsSelect.appendChild(o);
-                    }
-                    kidsWrap.classList.remove("hidden");
-                } else {
-                    kidsWrap.classList.add("hidden");
-                    kidsSelect.innerHTML = "";
-                }
                 show("step-extras");
                 show("step-diet");
                 show("step-comment");
@@ -1027,7 +1009,7 @@
             const guestCompanions = Array.from(document.querySelectorAll(".companion-input"))
                 .map(i => i.value.trim()).filter(Boolean).join(", ");
             const guestChildren = document.getElementById("guest-children").value;
-            const kidsMenu = document.getElementById("guest-kids-menu-count").value || "0";
+            const kidsMenu = document.getElementById("guest-children").value || "0"; // nº de niños = nº de menús infantiles
             const needsBus = document.getElementById("guest-bus").checked;
             const comment = document.getElementById("guest-comment").value;
 
@@ -1056,8 +1038,6 @@
             document.querySelectorAll(".form-step").forEach(s => s.classList.remove("show"));
             document.getElementById("companions-container").innerHTML = "";
             document.getElementById("step-attendance").classList.add("show");
-            document.getElementById("kids-menu-wrap").classList.add("hidden");
-            document.getElementById("guest-kids-menu-count").innerHTML = "";
             document.getElementById("success-modal").classList.remove("hidden");
         }
 
