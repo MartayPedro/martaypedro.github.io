@@ -544,37 +544,9 @@
                             <i id="dietary-icon" class="fa-regular fa-square-plus mr-2 text-sm"></i> Añadir Alergias, Intolerancias o Requerimientos de Menú
                         </button>
 
-                        <div id="dietary-container" class="hidden mt-4 p-4 bg-white/60 rounded-xl border border-weddingGold/10 space-y-4">
-                            <p class="text-[10px] text-weddingDark/70 font-light">Indica los requerimientos específicos de tu menú:</p>
-                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                <label class="flex items-center space-x-2 text-xs text-weddingDark/80 font-light cursor-pointer">
-                                    <input type="checkbox" value="celiaco" class="diet-checkbox rounded border-weddingGold/30 text-weddingGreen focus:ring-weddingGreen">
-                                    <span>Sin Gluten</span>
-                                </label>
-                                <label class="flex items-center space-x-2 text-xs text-weddingDark/80 font-light cursor-pointer">
-                                    <input type="checkbox" value="lactosa" class="diet-checkbox rounded border-weddingGold/30 text-weddingGreen focus:ring-weddingGreen">
-                                    <span>Lactosa</span>
-                                </label>
-                                <label class="flex items-center space-x-2 text-xs text-weddingDark/80 font-light cursor-pointer">
-                                    <input type="checkbox" value="vegetariano" class="diet-checkbox rounded border-weddingGold/30 text-weddingGreen focus:ring-weddingGreen">
-                                    <span>Vegetariano</span>
-                                </label>
-                                <label class="flex items-center space-x-2 text-xs text-weddingDark/80 font-light cursor-pointer">
-                                    <input type="checkbox" value="vegano" class="diet-checkbox rounded border-weddingGold/30 text-weddingGreen focus:ring-weddingGreen">
-                                    <span>Vegano</span>
-                                </label>
-                                <label class="flex items-center space-x-2 text-xs text-weddingDark/80 font-light cursor-pointer">
-                                    <input type="checkbox" value="marisco" class="diet-checkbox rounded border-weddingGold/30 text-weddingGreen focus:ring-weddingGreen">
-                                    <span>Marisco</span>
-                                </label>
-                                <label class="flex items-center space-x-2 text-xs text-weddingDark/80 font-light cursor-pointer">
-                                    <input type="checkbox" value="otros" class="diet-checkbox rounded border-weddingGold/30 text-weddingGreen focus:ring-weddingGreen" id="chk-others">
-                                    <span>Otros</span>
-                                </label>
-                            </div>
-                            <div>
-                                <input type="text" id="diet-details" placeholder="Escribe aquí los detalles o ingredientes adicionales..." class="w-full bg-white border border-weddingGold/15 rounded-lg px-3 py-2 text-xs focus:ring-weddingGreen focus:ring-1 focus:outline-none font-light">
-                            </div>
+                        <div id="dietary-container" class="hidden mt-4 space-y-3">
+                            <p class="text-[10px] text-weddingDark/70 font-light">Marca las alergias o requisitos de menú de cada comensal:</p>
+                            <div id="diet-people" class="space-y-3"></div>
                         </div>
                     </div>
 
@@ -998,7 +970,52 @@
                 icon.className = "fa-regular fa-square-plus mr-2 text-sm";
             } else {
                 icon.className = "fa-regular fa-square-minus mr-2 text-sm text-weddingGold";
+                buildDietPeople();
             }
+        }
+
+        // Genera un bloque de alérgenos por cada comensal (tú + acompañantes + niños).
+        function buildDietPeople() {
+            const cont = document.getElementById("diet-people");
+            const allergens = ["Sin gluten", "Lactosa", "Vegetariano", "Vegano", "Marisco"];
+
+            // Recopilamos la lista de comensales con sus nombres actuales.
+            const people = [];
+            const mainName = document.getElementById("guest-name").value.trim();
+            people.push(mainName || "Tú");
+            document.querySelectorAll(".companion-input").forEach((inp, idx) => {
+                people.push(inp.value.trim() || ("Acompañante " + (idx + 1)));
+            });
+            const childCount = Number(document.getElementById("guest-children").value) || 0;
+            for (let i = 1; i <= childCount; i++) people.push("Niño/a " + i);
+
+            // Conservamos lo ya marcado si se reabre (por nombre de comensal).
+            const previous = {};
+            cont.querySelectorAll(".diet-person").forEach(b => {
+                previous[b.dataset.person] = {
+                    items: Array.from(b.querySelectorAll(".diet-check:checked")).map(c => c.value),
+                    other: b.querySelector(".diet-other").value
+                };
+            });
+
+            cont.innerHTML = "";
+            people.forEach(person => {
+                const prev = previous[person] || { items: [], other: "" };
+                const checks = allergens.map(a => `
+                    <label class="flex items-center space-x-2 text-xs text-weddingDark/80 font-light cursor-pointer">
+                        <input type="checkbox" class="diet-check rounded border-weddingGold/30 text-weddingGreen focus:ring-weddingGreen" value="${a}" ${prev.items.includes(a) ? "checked" : ""}>
+                        <span>${a}</span>
+                    </label>`).join("");
+                const block = document.createElement("div");
+                block.className = "diet-person bg-white/70 border border-weddingGold/20 rounded-xl p-3";
+                block.dataset.person = person;
+                block.innerHTML = `
+                    <p class="text-xs font-semibold text-weddingGreen mb-2">${person}</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">${checks}</div>
+                    <input type="text" class="diet-other w-full bg-white border border-weddingGold/20 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen font-light" placeholder="Otras alergias o detalles..." value="${prev.other.replace(/"/g, '&quot;')}">
+                `;
+                cont.appendChild(block);
+            });
         }
 
         function handleRSVPSubmit(event) {
@@ -1013,11 +1030,15 @@
             const needsBus = document.getElementById("guest-bus").checked;
             const comment = document.getElementById("guest-comment").value;
 
-            const selectedDiets = [];
-            document.querySelectorAll(".diet-checkbox:checked").forEach(chk => {
-                selectedDiets.push(chk.value);
+            // Alérgenos por comensal.
+            const alergias = [];
+            document.querySelectorAll(".diet-person").forEach(block => {
+                const items = Array.from(block.querySelectorAll(".diet-check:checked")).map(c => c.value);
+                const other = block.querySelector(".diet-other").value.trim();
+                if (items.length || other) {
+                    alergias.push({ comensal: block.dataset.person, alergias: items, detalle: other });
+                }
             });
-            const details = document.getElementById("diet-details").value;
 
             enviarAlBackend({
                 tipo: "rsvp",
@@ -1028,8 +1049,7 @@
                 ninos: guestChildren,
                 menuInfantil: kidsMenu,
                 autobus: needsBus,
-                dietas: selectedDiets,
-                detalleDieta: details,
+                alergias: alergias,
                 comentarios: comment
             });
 
@@ -1037,6 +1057,9 @@
             // Reiniciamos el formulario guiado ocultando de nuevo todos los pasos.
             document.querySelectorAll(".form-step").forEach(s => s.classList.remove("show"));
             document.getElementById("companions-container").innerHTML = "";
+            document.getElementById("diet-people").innerHTML = "";
+            document.getElementById("dietary-container").classList.add("hidden");
+            document.getElementById("dietary-icon").className = "fa-regular fa-square-plus mr-2 text-sm";
             document.getElementById("step-attendance").classList.add("show");
             document.getElementById("success-modal").classList.remove("hidden");
         }
