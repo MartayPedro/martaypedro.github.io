@@ -527,14 +527,6 @@
                         </div>
                     </div>
 
-                    <div class="form-step space-y-4 pt-1" id="step-extras">
-                        <label class="flex items-center space-x-3 text-xs text-weddingDark/80 font-light cursor-pointer">
-                            <input type="checkbox" id="guest-bus" class="rounded border-weddingGold/30 text-weddingGreen focus:ring-weddingGreen">
-                            <span>Necesitaré plaza de autobús (Córdoba ⇄ Hacienda)</span>
-                        </label>
-                        <p id="bus-count-note" class="hidden text-[10px] text-weddingBlue font-light"></p>
-                    </div>
-
                     <!-- Dietary Restrictions Button toggler to reveal beautiful sub-fields -->
                     <div class="form-step" id="step-diet">
                         <button type="button" onclick="toggleDietaryFields()" class="flex w-full items-center text-[9px] uppercase tracking-wider text-weddingBlue font-semibold hover:text-weddingGold transition focus:outline-none text-left">
@@ -906,33 +898,30 @@
                 <button type="button" class="remove-row flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl border border-weddingGold/30 text-weddingGreen hover:bg-weddingGreen hover:text-white transition" aria-label="Quitar">
                     <i class="fa-solid fa-xmark"></i>
                 </button>`;
-            row.querySelector(".remove-row").addEventListener("click", () => { row.remove(); updateBusNote(); });
+            row.querySelector(".remove-row").addEventListener("click", () => row.remove());
             cont.appendChild(row);
             row.querySelector("input").focus();
-            updateBusNote();
-        }
-
-        // Muestra cuántas plazas de bus se reservarán (tú + acompañantes + niños).
-        function updateBusNote() {
-            const note = document.getElementById("bus-count-note");
-            const bus = document.getElementById("guest-bus");
-            if (!note || !bus) return;
-            const total = 1
-                + document.querySelectorAll(".companion-input").length
-                + document.querySelectorAll(".child-input").length;
-            if (bus.checked) {
-                note.textContent = "Reservaremos " + total + (total === 1 ? " plaza" : " plazas") + " (tú + acompañantes + niños).";
-                note.classList.remove("hidden");
-            } else {
-                note.classList.add("hidden");
-            }
         }
 
         function setupProgressiveForm() {
             const attendance = document.getElementById("guest-attendance");
 
+            // Al terminar de desplegarse, quitamos el límite de altura para que el
+            // contenido (p. ej. alérgenos por comensal) no se recorte ni se solape.
+            document.querySelectorAll(".form-step").forEach(el => {
+                el.addEventListener("transitionend", e => {
+                    if (e.propertyName === "max-height" && el.classList.contains("show")) {
+                        el.style.maxHeight = "none";
+                    }
+                });
+            });
+
             const show = id => document.getElementById(id).classList.add("show");
-            const hide = (...ids) => ids.forEach(id => document.getElementById(id).classList.remove("show"));
+            const hide = (...ids) => ids.forEach(id => {
+                const el = document.getElementById(id);
+                el.style.maxHeight = "";
+                el.classList.remove("show");
+            });
 
             // Según asista o no, se ramifica el formulario.
             const commentLabel = document.getElementById("guest-comment-label");
@@ -943,12 +932,11 @@
                     commentField.placeholder = "Cualquier indicación que queráis contarnos...";
                     show("step-companions");
                     show("step-children");
-                    show("step-extras");
                     show("step-diet");
                     show("step-comment");
                     show("step-submit");
                 } else if (attendance.value === "no") {
-                    hide("step-companions", "step-children", "step-extras", "step-diet");
+                    hide("step-companions", "step-children", "step-diet");
                     commentLabel.textContent = "¿Nos cuentas el motivo? (opcional)";
                     commentField.placeholder = "Nos encantaría saber por qué no podrás acompañarnos, ¡pero no es obligatorio!";
                     show("step-comment");
@@ -959,7 +947,6 @@
             document.getElementById("add-companion").addEventListener("click", () => addPersonRow("companion"));
             document.getElementById("add-child").addEventListener("click", () => addPersonRow("child"));
             document.getElementById("add-baby").addEventListener("click", () => addPersonRow("baby"));
-            document.getElementById("guest-bus").addEventListener("change", updateBusNote);
         }
 
         // --- RSVP FORM LOGIC ---
@@ -1032,8 +1019,6 @@
             const guestChildren = String(childInputs.length);
             const kidsMenu = String(childInputs.length); // nº de niños = nº de menús infantiles
             const guestBabies = String(babyInputs.length); // bebés = tronas, sin menú
-            const needsBus = document.getElementById("guest-bus").checked;
-            const busSeats = needsBus ? String(1 + companionInputs.length + childInputs.length) : "0";
             const comment = document.getElementById("guest-comment").value;
 
             // Alérgenos por comensal.
@@ -1056,19 +1041,16 @@
                 menuInfantil: kidsMenu,
                 bebes: guestBabies,
                 tronas: guestBabies,
-                autobus: needsBus,
-                autobusPlazas: busSeats,
                 alergias: alergias,
                 comentarios: comment
             });
 
             document.getElementById("rsvp-form").reset();
             // Reiniciamos el formulario guiado ocultando de nuevo todos los pasos.
-            document.querySelectorAll(".form-step").forEach(s => s.classList.remove("show"));
+            document.querySelectorAll(".form-step").forEach(s => { s.style.maxHeight = ""; s.classList.remove("show"); });
             document.getElementById("companions-container").innerHTML = "";
             document.getElementById("children-container").innerHTML = "";
             document.getElementById("babies-container").innerHTML = "";
-            document.getElementById("bus-count-note").classList.add("hidden");
             document.getElementById("diet-people").innerHTML = "";
             document.getElementById("dietary-container").classList.add("hidden");
             document.getElementById("dietary-icon").className = "fa-regular fa-square-plus mr-2 text-sm";
