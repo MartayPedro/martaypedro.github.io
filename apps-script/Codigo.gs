@@ -55,11 +55,26 @@ function doPost(e) {
       guardarCancion(data);
     } else if (data.tipo === "voto") {
       sumarVoto(data.id);
+    } else if (data.tipo === "editar") {
+      // Edición protegida con la clave del panel.
+      if (data.clave !== CLAVE_PANEL) return json({ ok: false, error: "Clave incorrecta" });
+      editarCelda(data.fila, data.campo, data.valor);
     }
     return json({ ok: true });
   } catch (err) {
     return json({ ok: false, error: String(err) });
   }
+}
+
+// Edita una celda concreta de la pestaña RSVP.
+function editarCelda(fila, campo, valor) {
+  var columnas = {
+    nombre: 2, asiste: 3, personas: 4, acompanantes: 5,
+    ninos: 6, bebes: 7, alergias: 8, comentarios: 9
+  };
+  var col = columnas[campo];
+  if (!col || !fila) return;
+  obtenerHoja(HOJA_RSVP).getRange(Number(fila), col).setValue(valor);
 }
 
 /* ---------- LECTURA ---------- */
@@ -90,6 +105,7 @@ function leerRSVP() {
     var f = valores[i];
     if (!f[1]) continue; // sin nombre, fila vacía
     filas.push({
+      fila: i + 1,
       fecha: f[0] ? Utilities.formatDate(new Date(f[0]), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm") : "",
       nombre: f[1],
       asiste: f[2],

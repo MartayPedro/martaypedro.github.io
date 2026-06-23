@@ -178,18 +178,76 @@
             }
 
             return `<div class="bg-white/60 border border-weddingGold/15 rounded-2xl overflow-hidden">
-                <button onclick="toggleFam(${idx})" class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-weddingGreenLight/20 transition">
-                    <div class="min-w-0">
+                <div class="w-full flex items-center justify-between px-4 py-3 hover:bg-weddingGreenLight/20 transition">
+                    <div class="min-w-0 flex-1 cursor-pointer" onclick="toggleFam(${idx})">
                         <span class="font-serif text-base text-weddingGreen">${esc(x.nombre)}</span>
                         ${asiste
                             ? `<span class="ml-2 text-[10px] text-green-600 font-semibold uppercase tracking-wider">Asiste · ${total} pers.</span>`
                             : `<span class="ml-2 text-[10px] text-red-500 font-semibold uppercase tracking-wider">No asiste</span>`}
                         <span class="block text-[10px] text-weddingDark/40">${esc(x.fecha)}</span>
                     </div>
-                    <i id="fam-ic-${idx}" class="fa-solid fa-chevron-up text-weddingGold transition-transform"></i>
-                </button>
-                <div id="fam-${idx}" class="border-t border-weddingGold/10 divide-y divide-weddingGold/5">${filas}</div>
+                    <div class="flex items-center gap-4 pl-3 flex-shrink-0">
+                        <button onclick="toggleEdit(${idx})" class="text-weddingGreen/50 hover:text-weddingGold" title="Editar"><i class="fa-solid fa-pen text-xs"></i></button>
+                        <button onclick="toggleFam(${idx})" class="text-weddingGold"><i id="fam-ic-${idx}" class="fa-solid fa-chevron-up transition-transform"></i></button>
+                    </div>
+                </div>
+                <div id="fam-${idx}" class="border-t border-weddingGold/10">
+                    <div id="vista-${idx}" class="divide-y divide-weddingGold/5">${filas}</div>
+                    <div id="edicion-${idx}" class="hidden p-4 grid grid-cols-2 gap-3 bg-weddingGreenLight/10">${formularioEdicion(x)}</div>
+                </div>
             </div>`;
+        }
+
+        function formularioEdicion(x) {
+            var f = x.fila;
+            return campoEdit("Nombre", f, "nombre", x.nombre, "text", "col-span-2")
+                + campoEdit("¿Asiste?", f, "asiste", x.asiste, "select")
+                + campoEdit("Nº asistentes (adultos)", f, "personas", x.personas, "number")
+                + campoEdit("Acompañantes", f, "acompanantes", x.acompanantes, "text", "col-span-2")
+                + campoEdit("Niños (menú)", f, "ninos", x.ninos, "number")
+                + campoEdit("Bebés (tronas)", f, "bebes", x.bebes, "number")
+                + campoEdit("Alergias por comensal", f, "alergias", x.alergias, "textarea", "col-span-2")
+                + campoEdit("Comentarios", f, "comentarios", x.comentarios, "textarea", "col-span-2");
+        }
+
+        function campoEdit(label, fila, campo, valor, tipo, span) {
+            tipo = tipo || "text";
+            span = span || "";
+            var base = 'data-fila="' + fila + '" data-campo="' + campo + '" onchange="guardarCampo(this)" class="w-full bg-white border border-weddingGold/30 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen"';
+            var control;
+            if (tipo === "select") {
+                control = '<select ' + base + '>'
+                    + '<option value="si"' + (String(valor) === "si" ? " selected" : "") + '>Sí</option>'
+                    + '<option value="no"' + (String(valor) === "no" ? " selected" : "") + '>No</option>'
+                    + '</select>';
+            } else if (tipo === "textarea") {
+                control = '<textarea rows="2" ' + base + '>' + esc(valor) + '</textarea>';
+            } else {
+                control = '<input type="' + tipo + '" value="' + escAttr(valor) + '" ' + base + '>';
+            }
+            return '<label class="block ' + span + '"><span class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-1">' + label + '</span>' + control + '</label>';
+        }
+
+        function escAttr(v) { return esc(v).replace(/"/g, "&quot;"); }
+
+        function toggleEdit(idx) {
+            document.getElementById("fam-" + idx).classList.remove("hidden");
+            document.getElementById("fam-ic-" + idx).classList.remove("rotate-180");
+            const edit = document.getElementById("edicion-" + idx);
+            const oculto = edit.classList.toggle("hidden");
+            document.getElementById("vista-" + idx).classList.toggle("hidden", !oculto);
+        }
+
+        function guardarCampo(el) {
+            const clave = sessionStorage.getItem("panelClave");
+            fetch(APPS_SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ tipo: "editar", clave: clave, fila: el.dataset.fila, campo: el.dataset.campo, valor: el.value })
+            }).catch(() => {});
+            el.classList.add("ring-2", "ring-green-400");
+            setTimeout(() => el.classList.remove("ring-2", "ring-green-400"), 1000);
         }
 
         function toggleFam(idx) {
