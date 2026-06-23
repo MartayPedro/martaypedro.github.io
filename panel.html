@@ -33,7 +33,10 @@
             <p class="text-xs text-weddingDark/60 font-light mb-6">Marta &amp; Pedro José · 11.10.2026</p>
             <input type="password" id="clave" placeholder="Contraseña" class="w-full bg-white border border-weddingGold/30 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen mb-3">
             <p id="login-error" class="hidden text-xs text-red-500 mb-3"></p>
-            <button onclick="entrar()" class="w-full py-3 bg-weddingGreen text-white text-[11px] uppercase tracking-[0.2em] font-medium rounded-xl hover:bg-weddingGold transition">Entrar</button>
+            <button id="login-btn" onclick="entrar()" class="w-full py-3 bg-weddingGreen text-white text-[11px] uppercase tracking-[0.2em] font-medium rounded-xl hover:bg-weddingGold transition disabled:opacity-70">
+                <span id="login-btn-text">Entrar</span>
+                <i id="login-btn-spin" class="fa-solid fa-circle-notch fa-spin ml-2 hidden"></i>
+            </button>
         </div>
     </div>
 
@@ -88,8 +91,16 @@
         function entrar() {
             const clave = document.getElementById("clave").value.trim();
             if (!clave) return;
+            document.getElementById("login-error").classList.add("hidden");
+            cargandoLogin(true);
             sessionStorage.setItem("panelClave", clave);
             cargar(true);
+        }
+
+        function cargandoLogin(activo) {
+            document.getElementById("login-btn").disabled = activo;
+            document.getElementById("login-btn-spin").classList.toggle("hidden", !activo);
+            document.getElementById("login-btn-text").textContent = activo ? "Comprobando..." : "Entrar";
         }
 
         async function cargar(desdeLogin) {
@@ -101,16 +112,17 @@
                 const res = await fetch(APPS_SCRIPT_URL + "?panel=" + encodeURIComponent(clave));
                 const data = await res.json();
                 if (!data.ok) {
-                    if (desdeLogin) mostrarErrorLogin(data.error || "Clave incorrecta");
+                    if (desdeLogin) { cargandoLogin(false); mostrarErrorLogin(data.error || "Clave incorrecta"); }
                     sessionStorage.removeItem("panelClave");
                     return;
                 }
                 DATA = data;
+                if (desdeLogin) cargandoLogin(false);
                 document.getElementById("login").classList.add("hidden");
                 document.getElementById("panel").classList.remove("hidden");
                 pintar(data);
             } catch (err) {
-                if (desdeLogin) mostrarErrorLogin("No se pudo conectar. Inténtalo de nuevo.");
+                if (desdeLogin) { cargandoLogin(false); mostrarErrorLogin("No se pudo conectar. Inténtalo de nuevo."); }
                 else if (estado) estado.textContent = "Error de conexión.";
             }
         }
