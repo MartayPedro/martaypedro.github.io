@@ -68,10 +68,16 @@
         <div class="overflow-x-auto bg-white/60 border border-weddingGold/15 rounded-2xl">
             <table class="w-full text-xs text-left">
                 <thead class="bg-weddingGreenLight/50 text-weddingGreen uppercase text-[10px] tracking-wider">
-                    <tr><th class="px-3 py-3">#</th><th class="px-3 py-3">Título</th><th class="px-3 py-3">Artista</th><th class="px-3 py-3">Propuesta por</th><th class="px-3 py-3 text-center">Votos</th></tr>
+                    <tr><th class="px-3 py-3">#</th><th class="px-3 py-3">Título</th><th class="px-3 py-3">Artista</th><th class="px-3 py-3">Propuesta por</th><th class="px-3 py-3 text-center">Votos</th><th class="px-3 py-3"></th></tr>
                 </thead>
                 <tbody id="playlist-body" class="divide-y divide-weddingGold/10"></tbody>
             </table>
+        </div>
+        <div class="mt-3 flex flex-wrap items-end gap-2">
+            <div><span class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-1">Título</span><input id="nueva-titulo" class="bg-white border border-weddingGold/30 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-weddingGreen/30"></div>
+            <div><span class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-1">Artista</span><input id="nueva-artista" class="bg-white border border-weddingGold/30 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-weddingGreen/30"></div>
+            <div><span class="block text-[9px] uppercase tracking-wider text-weddingGreen font-semibold mb-1">Propuesta por</span><input id="nueva-proponente" class="bg-white border border-weddingGold/30 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-weddingGreen/30"></div>
+            <button onclick="anadirCancion()" class="text-[11px] uppercase tracking-wider text-white font-semibold bg-weddingGreen rounded-lg px-4 py-2 hover:bg-weddingGreen/90 transition"><i class="fa-solid fa-plus mr-1"></i> Añadir</button>
         </div>
 
         <p id="estado" class="text-center text-[11px] text-weddingDark/50 mt-8"></p>
@@ -250,6 +256,42 @@
             setTimeout(() => el.classList.remove("ring-2", "ring-green-400"), 1000);
         }
 
+        function postPanel(payload) {
+            payload.clave = sessionStorage.getItem("panelClave");
+            return fetch(APPS_SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(payload)
+            }).catch(() => {});
+        }
+
+        function guardarCancion(el) {
+            postPanel({ tipo: "editarCancion", id: el.dataset.id, campo: el.dataset.campo, valor: el.value });
+            el.classList.add("ring-2", "ring-green-400");
+            setTimeout(() => el.classList.remove("ring-2", "ring-green-400"), 1000);
+        }
+
+        function borrarCancion(id, btn) {
+            if (!confirm("¿Borrar esta canción de la lista?")) return;
+            postPanel({ tipo: "borrarCancion", id: id });
+            const tr = btn.closest("tr");
+            tr.style.opacity = "0.4";
+            setTimeout(() => cargar(false), 600);
+        }
+
+        function anadirCancion() {
+            const titulo = document.getElementById("nueva-titulo").value.trim();
+            const artista = document.getElementById("nueva-artista").value.trim();
+            const proponente = document.getElementById("nueva-proponente").value.trim();
+            if (!titulo) { document.getElementById("nueva-titulo").focus(); return; }
+            postPanel({ tipo: "cancion", titulo: titulo, artista: artista, proponente: proponente || "Novios" });
+            document.getElementById("nueva-titulo").value = "";
+            document.getElementById("nueva-artista").value = "";
+            document.getElementById("nueva-proponente").value = "";
+            setTimeout(() => cargar(false), 700);
+        }
+
         function toggleFam(idx) {
             const cont = document.getElementById("fam-" + idx);
             const ic = document.getElementById("fam-ic-" + idx);
@@ -291,8 +333,9 @@
                 tarjeta(respuestas, "Respuestas", "fa-solid fa-list-check", "text-weddingGreen") +
                 tarjeta(asistenSi, "Familias que asisten", "fa-solid fa-circle-check", "text-green-600") +
                 tarjeta(asistenNo, "No asisten", "fa-solid fa-circle-xmark", "text-red-500") +
-                tarjeta(asistentes, "Asistentes (adultos+niños)", "fa-solid fa-users", "text-weddingGold") +
-                tarjeta(ninos, "Niños (menú)", "fa-solid fa-child", "text-weddingGold") +
+                tarjeta(adultos, "Adultos (menú adulto)", "fa-solid fa-user", "text-weddingGold") +
+                tarjeta(ninos, "Niños (menú infantil)", "fa-solid fa-child", "text-weddingGold") +
+                tarjeta(asistentes, "Total comensales (adultos+niños)", "fa-solid fa-users", "text-weddingGreen") +
                 tarjeta(bebes, "Bebés (tronas)", "fa-solid fa-baby", "text-weddingGold");
 
             // Listado plegable por familia, con una línea por persona.
@@ -305,14 +348,16 @@
 
             const pb = document.getElementById("playlist-body");
             const songs = (data.canciones||[]).slice().sort((a,b)=>b.votos-a.votos);
+            const inp = (id,campo,valor,extra) => `<input value="${escAttr(valor)}" data-id="${esc(id)}" data-campo="${campo}" onchange="guardarCancion(this)" class="w-full bg-transparent border border-transparent hover:border-weddingGold/30 focus:border-weddingGreen focus:bg-white rounded px-2 py-1 text-xs focus:outline-none ${extra||''}">`;
             pb.innerHTML = songs.map((s,i) => `
                 <tr class="hover:bg-weddingGreenLight/20">
                     <td class="px-3 py-2 text-weddingDark/50">${i+1}</td>
-                    <td class="px-3 py-2 font-semibold text-weddingGreen">${esc(s.titulo)}</td>
-                    <td class="px-3 py-2">${esc(s.artista)}</td>
-                    <td class="px-3 py-2 text-weddingDark/70">${esc(s.proponente)}</td>
-                    <td class="px-3 py-2 text-center font-semibold text-weddingGold">${s.votos}</td>
-                </tr>`).join("") || `<tr><td colspan="5" class="px-3 py-6 text-center text-weddingDark/50">Aún no hay sugerencias.</td></tr>`;
+                    <td class="px-2 py-1">${inp(s.id,"titulo",s.titulo,"font-semibold text-weddingGreen")}</td>
+                    <td class="px-2 py-1">${inp(s.id,"artista",s.artista)}</td>
+                    <td class="px-2 py-1">${inp(s.id,"proponente",s.proponente,"text-weddingDark/70")}</td>
+                    <td class="px-2 py-1 w-16"><input type="number" value="${escAttr(s.votos)}" data-id="${esc(s.id)}" data-campo="votos" onchange="guardarCancion(this)" class="w-14 bg-transparent border border-transparent hover:border-weddingGold/30 focus:border-weddingGreen focus:bg-white rounded px-2 py-1 text-xs text-center font-semibold text-weddingGold focus:outline-none"></td>
+                    <td class="px-3 py-2 text-center"><button onclick="borrarCancion('${esc(s.id)}', this)" class="text-red-400 hover:text-red-600" title="Borrar"><i class="fa-solid fa-trash text-xs"></i></button></td>
+                </tr>`).join("") || `<tr><td colspan="6" class="px-3 py-6 text-center text-weddingDark/50">Aún no hay sugerencias.</td></tr>`;
 
             document.getElementById("estado").textContent = "Actualizado: " + new Date().toLocaleString("es-ES");
         }

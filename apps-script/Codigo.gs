@@ -59,6 +59,12 @@ function doPost(e) {
       // Edición protegida con la clave del panel.
       if (data.clave !== CLAVE_PANEL) return json({ ok: false, error: "Clave incorrecta" });
       editarCelda(data.fila, data.campo, data.valor);
+    } else if (data.tipo === "editarCancion") {
+      if (data.clave !== CLAVE_PANEL) return json({ ok: false, error: "Clave incorrecta" });
+      editarCancion(data.id, data.campo, data.valor);
+    } else if (data.tipo === "borrarCancion") {
+      if (data.clave !== CLAVE_PANEL) return json({ ok: false, error: "Clave incorrecta" });
+      borrarCancion(data.id);
     }
     return json({ ok: true });
   } catch (err) {
@@ -183,6 +189,33 @@ function guardarCancion(data) {
   }
   var id = "c" + new Date().getTime();
   hoja.appendRow([id, data.titulo || "", data.artista || "", data.proponente || "", 1]);
+}
+
+// Edita un campo de una canción (búsqueda por id).
+function editarCancion(id, campo, valor) {
+  var columnas = { titulo: 2, artista: 3, proponente: 4, votos: 5 };
+  var col = columnas[campo];
+  if (!col) return;
+  var hoja = obtenerHoja(HOJA_PLAYLIST);
+  var valores = hoja.getDataRange().getValues();
+  for (var i = 1; i < valores.length; i++) {
+    if (String(valores[i][0]) === String(id)) {
+      hoja.getRange(i + 1, col).setValue(campo === "votos" ? (Number(valor) || 0) : valor);
+      return;
+    }
+  }
+}
+
+// Borra una canción (búsqueda por id).
+function borrarCancion(id) {
+  var hoja = obtenerHoja(HOJA_PLAYLIST);
+  var valores = hoja.getDataRange().getValues();
+  for (var i = 1; i < valores.length; i++) {
+    if (String(valores[i][0]) === String(id)) {
+      hoja.deleteRow(i + 1);
+      return;
+    }
+  }
 }
 
 function sumarVoto(id) {
