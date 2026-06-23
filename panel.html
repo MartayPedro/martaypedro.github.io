@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Panel · Marta & Pedro José</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@300..700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = { theme: { extend: {
+            colors: {
+                weddingBeige: '#FAF7F2', weddingGreen: '#526B79', weddingBlue: '#526B79',
+                weddingGold: '#C5A880', weddingGreenLight: '#E8EFF2', weddingDark: '#253238'
+            },
+            fontFamily: { serif: ['"Playfair Display"','serif'], sans: ['"Montserrat"','sans-serif'] }
+        } } };
+
+        // Misma URL del Apps Script que usa la web.
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzKoGs8Nhzgg_ASGrRcqsWUvoTGIBuFhxBZp1WjY-TPQwyUiZbkmSsaZY4OZZWm8zO6/exec";
+    </script>
+</head>
+<body class="bg-weddingBeige font-sans text-weddingDark min-h-screen">
+
+    <!-- Pantalla de acceso -->
+    <div id="login" class="min-h-screen flex items-center justify-center px-6">
+        <div class="bg-white/70 backdrop-blur-sm border border-weddingGold/20 rounded-3xl p-8 md:p-10 max-w-sm w-full shadow-sm text-center">
+            <div class="text-weddingGreen text-3xl mb-4"><i class="fa-solid fa-lock font-light"></i></div>
+            <h1 class="font-serif text-2xl text-weddingGreen font-light mb-2">Panel de control</h1>
+            <p class="text-xs text-weddingDark/60 font-light mb-6">Marta &amp; Pedro José · 11.10.2026</p>
+            <input type="password" id="clave" placeholder="Contraseña" class="w-full bg-white border border-weddingGold/30 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-weddingGreen/30 focus:border-weddingGreen mb-3">
+            <p id="login-error" class="hidden text-xs text-red-500 mb-3"></p>
+            <button onclick="entrar()" class="w-full py-3 bg-weddingGreen text-white text-[11px] uppercase tracking-[0.2em] font-medium rounded-xl hover:bg-weddingGold transition">Entrar</button>
+        </div>
+    </div>
+
+    <!-- Panel -->
+    <div id="panel" class="hidden max-w-6xl mx-auto px-4 md:px-6 py-10">
+        <div class="flex items-center justify-between mb-8 flex-wrap gap-3">
+            <div>
+                <h1 class="font-serif text-3xl text-weddingGreen font-light">Panel de control</h1>
+                <p class="text-xs text-weddingDark/60 font-light">Confirmaciones y playlist en tiempo real</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="cargar()" class="px-4 py-2 border border-weddingGreen text-weddingGreen rounded-full text-[11px] uppercase tracking-wider font-semibold hover:bg-weddingGreen hover:text-white transition"><i class="fa-solid fa-rotate mr-1"></i> Actualizar</button>
+                <button onclick="exportarCSV()" class="px-4 py-2 border border-weddingGold text-weddingGold rounded-full text-[11px] uppercase tracking-wider font-semibold hover:bg-weddingGold hover:text-white transition"><i class="fa-solid fa-download mr-1"></i> CSV</button>
+            </div>
+        </div>
+
+        <!-- Resumen -->
+        <div id="resumen" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-10"></div>
+
+        <!-- RSVP -->
+        <h2 class="font-serif text-xl text-weddingGreen font-light mb-3"><i class="fa-solid fa-envelope-open-text text-weddingGold mr-2"></i>Confirmaciones</h2>
+        <div class="overflow-x-auto bg-white/60 border border-weddingGold/15 rounded-2xl mb-12">
+            <table class="w-full text-xs text-left">
+                <thead class="bg-weddingGreenLight/50 text-weddingGreen uppercase text-[10px] tracking-wider">
+                    <tr>
+                        <th class="px-3 py-3">Fecha</th><th class="px-3 py-3">Nombre</th><th class="px-3 py-3">Asiste</th>
+                        <th class="px-3 py-3">Nº</th><th class="px-3 py-3">Acompañantes</th><th class="px-3 py-3">Niños</th>
+                        <th class="px-3 py-3">Bebés</th><th class="px-3 py-3">Alergias</th><th class="px-3 py-3">Comentarios</th>
+                    </tr>
+                </thead>
+                <tbody id="rsvp-body" class="divide-y divide-weddingGold/10"></tbody>
+            </table>
+        </div>
+
+        <!-- Playlist -->
+        <h2 class="font-serif text-xl text-weddingGreen font-light mb-3"><i class="fa-solid fa-music text-weddingGold mr-2"></i>Playlist sugerida</h2>
+        <div class="overflow-x-auto bg-white/60 border border-weddingGold/15 rounded-2xl">
+            <table class="w-full text-xs text-left">
+                <thead class="bg-weddingGreenLight/50 text-weddingGreen uppercase text-[10px] tracking-wider">
+                    <tr><th class="px-3 py-3">#</th><th class="px-3 py-3">Título</th><th class="px-3 py-3">Artista</th><th class="px-3 py-3">Propuesta por</th><th class="px-3 py-3 text-center">Votos</th></tr>
+                </thead>
+                <tbody id="playlist-body" class="divide-y divide-weddingGold/10"></tbody>
+            </table>
+        </div>
+
+        <p id="estado" class="text-center text-[11px] text-weddingDark/50 mt-8"></p>
+    </div>
+
+    <script>
+        let DATA = null;
+
+        function entrar() {
+            const clave = document.getElementById("clave").value.trim();
+            if (!clave) return;
+            sessionStorage.setItem("panelClave", clave);
+            cargar(true);
+        }
+
+        async function cargar(desdeLogin) {
+            const clave = sessionStorage.getItem("panelClave");
+            if (!clave) return;
+            const estado = document.getElementById("estado");
+            if (estado) estado.textContent = "Cargando...";
+            try {
+                const res = await fetch(APPS_SCRIPT_URL + "?panel=" + encodeURIComponent(clave));
+                const data = await res.json();
+                if (!data.ok) {
+                    if (desdeLogin) mostrarErrorLogin(data.error || "Clave incorrecta");
+                    sessionStorage.removeItem("panelClave");
+                    return;
+                }
+                DATA = data;
+                document.getElementById("login").classList.add("hidden");
+                document.getElementById("panel").classList.remove("hidden");
+                pintar(data);
+            } catch (err) {
+                if (desdeLogin) mostrarErrorLogin("No se pudo conectar. Inténtalo de nuevo.");
+                else if (estado) estado.textContent = "Error de conexión.";
+            }
+        }
+
+        function mostrarErrorLogin(msg) {
+            const e = document.getElementById("login-error");
+            e.textContent = msg;
+            e.classList.remove("hidden");
+        }
+
+        function tarjeta(valor, etiqueta, icono, color) {
+            return `<div class="bg-white/70 border border-weddingGold/15 rounded-2xl p-4 text-center">
+                <div class="${color} text-xl mb-1"><i class="${icono}"></i></div>
+                <div class="font-serif text-2xl text-weddingGreen">${valor}</div>
+                <div class="text-[9px] uppercase tracking-wider text-weddingDark/60">${etiqueta}</div>
+            </div>`;
+        }
+
+        function pintar(data) {
+            const r = data.resumen || {};
+            document.getElementById("resumen").innerHTML =
+                tarjeta(r.respuestas||0, "Respuestas", "fa-solid fa-list-check", "text-weddingGreen") +
+                tarjeta(r.asistenSi||0, "Asisten", "fa-solid fa-circle-check", "text-green-600") +
+                tarjeta(r.asistenNo||0, "No asisten", "fa-solid fa-circle-xmark", "text-red-500") +
+                tarjeta(r.totalComensales||0, "Comensales", "fa-solid fa-utensils", "text-weddingGold") +
+                tarjeta(r.totalNinos||0, "Niños (menú)", "fa-solid fa-child", "text-weddingGold") +
+                tarjeta(r.totalBebes||0, "Bebés (tronas)", "fa-solid fa-baby", "text-weddingGold");
+
+            const rb = document.getElementById("rsvp-body");
+            rb.innerHTML = (data.rsvp||[]).map(x => `
+                <tr class="hover:bg-weddingGreenLight/20">
+                    <td class="px-3 py-2 whitespace-nowrap text-weddingDark/60">${x.fecha||""}</td>
+                    <td class="px-3 py-2 font-semibold text-weddingGreen">${esc(x.nombre)}</td>
+                    <td class="px-3 py-2">${x.asiste==="si" ? '<span class="text-green-600 font-semibold">Sí</span>' : '<span class="text-red-500">No</span>'}</td>
+                    <td class="px-3 py-2 text-center">${esc(x.personas)}</td>
+                    <td class="px-3 py-2">${esc(x.acompanantes)}</td>
+                    <td class="px-3 py-2 text-center">${esc(x.ninos)}</td>
+                    <td class="px-3 py-2 text-center">${esc(x.bebes)}</td>
+                    <td class="px-3 py-2 text-weddingDark/80">${esc(x.alergias)}</td>
+                    <td class="px-3 py-2 text-weddingDark/80">${esc(x.comentarios)}</td>
+                </tr>`).join("") || `<tr><td colspan="9" class="px-3 py-6 text-center text-weddingDark/50">Aún no hay confirmaciones.</td></tr>`;
+
+            const pb = document.getElementById("playlist-body");
+            const songs = (data.canciones||[]).slice().sort((a,b)=>b.votos-a.votos);
+            pb.innerHTML = songs.map((s,i) => `
+                <tr class="hover:bg-weddingGreenLight/20">
+                    <td class="px-3 py-2 text-weddingDark/50">${i+1}</td>
+                    <td class="px-3 py-2 font-semibold text-weddingGreen">${esc(s.titulo)}</td>
+                    <td class="px-3 py-2">${esc(s.artista)}</td>
+                    <td class="px-3 py-2 text-weddingDark/70">${esc(s.proponente)}</td>
+                    <td class="px-3 py-2 text-center font-semibold text-weddingGold">${s.votos}</td>
+                </tr>`).join("") || `<tr><td colspan="5" class="px-3 py-6 text-center text-weddingDark/50">Aún no hay sugerencias.</td></tr>`;
+
+            document.getElementById("estado").textContent = "Actualizado: " + new Date().toLocaleString("es-ES");
+        }
+
+        function esc(v) {
+            return String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+        }
+
+        function exportarCSV() {
+            if (!DATA) return;
+            const cols = ["fecha","nombre","asiste","personas","acompanantes","ninos","bebes","alergias","comentarios"];
+            const cab = ["Fecha","Nombre","Asiste","Nº asistentes","Acompañantes","Niños","Bebés","Alergias","Comentarios"];
+            let csv = cab.join(";") + "\n";
+            (DATA.rsvp||[]).forEach(x => {
+                csv += cols.map(c => '"' + String(x[c]==null?"":x[c]).replace(/"/g,'""') + '"').join(";") + "\n";
+            });
+            const blob = new Blob(["﻿"+csv], {type:"text/csv;charset=utf-8;"});
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "confirmaciones-boda.csv";
+            a.click();
+        }
+
+        // Si ya hay clave en la sesión, entra directo.
+        if (sessionStorage.getItem("panelClave")) cargar(false);
+    </script>
+</body>
+</html>

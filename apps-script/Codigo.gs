@@ -3,16 +3,18 @@
  *
  * Conecta el formulario de confirmación (RSVP) y las sugerencias de música
  * con una hoja de cálculo de Google Sheets (dos pestañas: "RSVP" y "Playlist").
+ * Además sirve los datos al panel de control privado (protegido con clave).
  *
- * CÓMO INSTALARLO:
- *  1. Crea una hoja de cálculo nueva en Google Sheets.
+ * CÓMO INSTALARLO / ACTUALIZARLO:
+ *  1. Crea (o abre) la hoja de cálculo en Google Sheets.
  *  2. Menú: Extensiones → Apps Script.
  *  3. Borra lo que haya y pega TODO este archivo. Guarda.
- *  4. Despliega: Implementar → Nueva implementación → tipo "Aplicación web".
+ *  4. CAMBIA la clave del panel abajo (CLAVE_PANEL) por una tuya.
+ *  5. Despliega: Implementar → Gestionar implementaciones → (editar la
+ *     existente) → Nueva versión, o "Nueva implementación" → "Aplicación web".
  *       - Ejecutar como: Yo mismo.
  *       - Quién tiene acceso: Cualquier persona.
- *  5. Copia la URL que termina en /exec y pásasela a Claude (o pégala en
- *     index.html, en la constante APPS_SCRIPT_URL).
+ *  6. La URL /exec ya está puesta en la web. Si creas una nueva, pásasela a Claude.
  *
  * Las pestañas y cabeceras se crean automáticamente la primera vez.
  */
@@ -20,24 +22,25 @@
 var HOJA_RSVP = "RSVP";
 var HOJA_PLAYLIST = "Playlist";
 
+// ⚠️ CAMBIA esta clave por una tuya. Es la contraseña para entrar al panel.
+var CLAVE_PANEL = "marta-pedro-2026";
+
 function doGet(e) {
-  // Devuelve las canciones para pintar la playlist en la web.
   try {
-    var hoja = obtenerHoja(HOJA_PLAYLIST);
-    var valores = hoja.getDataRange().getValues();
-    var canciones = [];
-    for (var i = 1; i < valores.length; i++) {
-      var fila = valores[i];
-      if (!fila[0]) continue; // sin id, fila vacía
-      canciones.push({
-        id: String(fila[0]),
-        titulo: fila[1],
-        artista: fila[2],
-        proponente: fila[3],
-        votos: Number(fila[4]) || 0
+    // Si llega la clave correcta, devolvemos TODOS los datos para el panel.
+    if (e && e.parameter && e.parameter.panel) {
+      if (e.parameter.panel !== CLAVE_PANEL) {
+        return json({ ok: false, error: "Clave incorrecta" });
+      }
+      return json({
+        ok: true,
+        rsvp: leerRSVP(),
+        canciones: leerCanciones(),
+        resumen: calcularResumen()
       });
     }
-    return json({ ok: true, canciones: canciones });
+    // Petición pública: solo la playlist.
+    return json({ ok: true, canciones: leerCanciones() });
   } catch (err) {
     return json({ ok: false, error: String(err) });
   }
@@ -58,6 +61,73 @@ function doPost(e) {
     return json({ ok: false, error: String(err) });
   }
 }
+
+/* ---------- LECTURA ---------- */
+
+function leerCanciones() {
+  var hoja = obtenerHoja(HOJA_PLAYLIST);
+  var valores = hoja.getDataRange().getValues();
+  var canciones = [];
+  for (var i = 1; i < valores.length; i++) {
+    var fila = valores[i];
+    if (!fila[0]) continue;
+    canciones.push({
+      id: String(fila[0]),
+      titulo: fila[1],
+      artista: fila[2],
+      proponente: fila[3],
+      votos: Number(fila[4]) || 0
+    });
+  }
+  return canciones;
+}
+
+function leerRSVP() {
+  var hoja = obtenerHoja(HOJA_RSVP);
+  var valores = hoja.getDataRange().getValues();
+  var filas = [];
+  for (var i = 1; i < valores.length; i++) {
+    var f = valores[i];
+    if (!f[1]) continue; // sin nombre, fila vacía
+    filas.push({
+      fecha: f[0] ? Utilities.formatDate(new Date(f[0]), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm") : "",
+      nombre: f[1],
+      asiste: f[2],
+      personas: f[3],
+      acompanantes: f[4],
+      ninos: f[5],
+      bebes: f[6],
+      alergias: f[7],
+      comentarios: f[8]
+    });
+  }
+  return filas;
+}
+
+function calcularResumen() {
+  var rsvp = leerRSVP();
+  var r = {
+    respuestas: rsvp.length,
+    asistenSi: 0,
+    asistenNo: 0,
+    totalComensales: 0,
+    totalNinos: 0,
+    totalBebes: 0
+  };
+  rsvp.forEach(function (x) {
+    if (String(x.asiste) === "si") {
+      r.asistenSi++;
+      r.totalComensales += Number(x.personas) || 0;
+      r.totalNinos += Number(x.ninos) || 0;
+      r.totalBebes += Number(x.bebes) || 0;
+    } else if (String(x.asiste) === "no") {
+      r.asistenNo++;
+    }
+  });
+  return r;
+}
+
+/* ---------- ESCRITURA ---------- */
 
 function guardarRSVP(data) {
   var hoja = obtenerHoja(HOJA_RSVP);
@@ -110,6 +180,8 @@ function sumarVoto(id) {
     }
   }
 }
+
+/* ---------- UTILIDADES ---------- */
 
 function obtenerHoja(nombre) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
