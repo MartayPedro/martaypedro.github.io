@@ -662,7 +662,7 @@
                 <div class="md:col-span-8 bg-white/60 backdrop-blur-sm p-6 rounded-2xl border border-weddingGold/10 text-left shadow-sm">
                     <h3 class="font-serif text-lg text-weddingGreen mb-4 flex justify-between items-center font-light">
                         <span>Sugerencias de los Invitados</span>
-                        <span id="songs-count" class="text-[9px] bg-weddingGreenLight/30 text-weddingGreen px-3 py-1 rounded-full font-sans tracking-widest font-semibold uppercase">0 temas</span>
+                        <span id="songs-count" class="text-[9px] bg-weddingGreenLight/30 text-weddingGreen px-3 py-1 rounded-full font-sans tracking-widest font-semibold uppercase whitespace-nowrap flex-shrink-0">0 temas</span>
                     </h3>
 
                     <div id="songs-list" class="space-y-3 max-h-[360px] overflow-y-auto pr-2 custom-scrollbar">
@@ -1163,17 +1163,18 @@
             }
 
             sorted.forEach(song => {
+                const liked = getLikedSongs().includes(String(song.id));
                 const songItem = document.createElement("div");
                 songItem.className = "flex items-center justify-between p-4 bg-white/40 hover:bg-white/80 transition rounded-xl border border-weddingGold/10";
                 songItem.innerHTML = `
-                    <div>
-                        <p class="font-serif text-sm text-weddingGreen font-semibold">${song.title}</p>
-                        <p class="text-[10px] text-weddingDark/70 font-light">${song.artist} • <span class="italic text-[9px]">por ${song.submitter}</span></p>
+                    <div class="min-w-0 pr-3">
+                        <p class="font-serif text-sm text-weddingGreen font-semibold truncate">${song.title}</p>
+                        <p class="text-[10px] text-weddingDark/70 font-light truncate">${song.artist} • <span class="italic text-[9px]">por ${song.submitter}</span></p>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <button onclick="voteSong('${song.id}')" class="text-[10px] px-3 py-1 bg-white text-weddingGreen border border-weddingGold/10 hover:border-weddingGold hover:text-weddingGold hover:scale-[1.03] transition rounded-full flex items-center space-x-1.5 font-light">
-                            <i class="fa-regular fa-heart"></i>
-                            <span>${song.votes}</span>
+                    <div class="flex items-center flex-shrink-0">
+                        <button onclick="voteSong('${song.id}')" ${liked ? "disabled" : ""} class="text-[10px] pl-3 pr-3.5 py-1.5 bg-white ${liked ? "border-weddingGold text-weddingGold" : "border-weddingGold/10 text-weddingGreen"} border hover:border-weddingGold hover:text-weddingGold ${liked ? "" : "hover:scale-[1.03]"} transition rounded-full inline-flex items-center gap-1.5 font-light leading-none">
+                            <i class="fa-${liked ? "solid" : "regular"} fa-heart text-[11px]"></i>
+                            <span class="tabular-nums">${song.votes}</span>
                         </button>
                     </div>
                 `;
@@ -1181,12 +1182,20 @@
             });
         }
 
+        // Likes: 1 por dispositivo, recordado en el navegador.
+        function getLikedSongs() {
+            try { return JSON.parse(localStorage.getItem("mp_liked") || "[]"); }
+            catch (e) { return []; }
+        }
+
         function voteSong(id) {
+            const liked = getLikedSongs();
+            if (liked.includes(String(id))) return; // ya votaste esta canción
             const target = WeddingState.playlist.find(s => s.id === id);
-            if (target) {
-                target.votes += 1;       // suma optimista inmediata
-                renderPlaylist();
-            }
+            if (target) target.votes += 1; // suma optimista
+            liked.push(String(id));
+            localStorage.setItem("mp_liked", JSON.stringify(liked));
+            renderPlaylist();
             enviarAlBackend({ tipo: "voto", id: id });
         }
 
