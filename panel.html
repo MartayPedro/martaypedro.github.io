@@ -61,6 +61,7 @@
             <h2 class="font-serif text-xl text-weddingGreen font-light"><i class="fa-solid fa-envelope-open-text text-weddingGold mr-2"></i>Confirmaciones</h2>
             <button onclick="toggleTodas()" id="toggle-todas" class="text-sm uppercase tracking-wider text-weddingGreen font-semibold border border-weddingGreen/40 rounded-full px-4 py-1.5 hover:bg-weddingGreen hover:text-white transition"><i class="fa-solid fa-chevron-up mr-1"></i> Colapsar todo</button>
         </div>
+        <div id="filtros" class="flex flex-wrap gap-2 mb-3"></div>
         <div id="rsvp-body" class="space-y-3 mb-12"></div>
 
         <!-- Playlist -->
@@ -165,7 +166,7 @@
             const asiste = String(x.asiste) === "si";
             const personas = asiste ? personasFamilia(x) : [];
             const alerg = mapaAlergias(x.alergias);
-            const total = (Number(x.personas) || 0) + (Number(x.ninos) || 0) + (Number(x.bebes) || 0);
+            const total = Math.max(0, Number(x.personas) || 0) + Math.max(0, Number(x.ninos) || 0) + Math.max(0, Number(x.bebes) || 0);
 
             let filas = personas.map(p => {
                 const a = alerg[p.nombre];
@@ -194,6 +195,7 @@
                     </div>
                     <div class="flex items-center gap-4 pl-3 flex-shrink-0">
                         <button onclick="toggleEdit(${idx})" class="text-weddingGreen/50 hover:text-weddingGold" title="Editar"><i class="fa-solid fa-pen text-sm"></i></button>
+                        <button onclick="borrarFamilia(${x.fila}, '${escAttr(x.nombre)}')" class="text-red-400 hover:text-red-600" title="Eliminar familia"><i class="fa-solid fa-trash text-sm"></i></button>
                         <button onclick="toggleFam(${idx})" class="text-weddingGold"><i id="fam-ic-${idx}" class="fa-solid fa-chevron-up transition-transform"></i></button>
                     </div>
                 </div>
@@ -319,12 +321,13 @@
             const rsvp = data.rsvp || [];
             // Calculamos el resumen en el cliente: asistentes = adultos totales + niños.
             let respuestas = rsvp.length, asistenSi = 0, asistenNo = 0, adultos = 0, ninos = 0, bebes = 0;
+            const num = v => Math.max(0, Number(v) || 0);
             rsvp.forEach(x => {
                 if (String(x.asiste) === "si") {
                     asistenSi++;
-                    adultos += Number(x.personas) || 0;
-                    ninos += Number(x.ninos) || 0;
-                    bebes += Number(x.bebes) || 0;
+                    adultos += num(x.personas);
+                    ninos += num(x.ninos);
+                    bebes += num(x.bebes);
                 } else if (String(x.asiste) === "no") { asistenNo++; }
             });
             const asistentes = adultos + ninos;
@@ -337,13 +340,8 @@
                 tarjeta(asistentes, "Total comensales (adultos+niños)", "fa-solid fa-users", "text-weddingGreen") +
                 tarjeta(bebes, "Bebés (tronas)", "fa-solid fa-baby", "text-weddingGold");
 
-            // Listado plegable por familia, con una línea por persona.
-            const rb = document.getElementById("rsvp-body");
-            if (!rsvp.length) {
-                rb.innerHTML = `<div class="bg-white/60 border border-weddingGold/15 rounded-2xl px-4 py-6 text-center text-weddingDark/50">Aún no hay confirmaciones.</div>`;
-            } else {
-                rb.innerHTML = rsvp.map((x, idx) => familiaBloque(x, idx)).join("");
-            }
+            // Listado plegable por familia (se pinta según el filtro activo).
+            renderRSVP();
 
             const pb = document.getElementById("playlist-body");
             const songs = (data.canciones||[]).slice().sort((a,b)=>b.votos-a.votos);
@@ -359,6 +357,49 @@
                 </tr>`).join("") || `<tr><td colspan="6" class="px-3 py-6 text-center text-weddingDark/50">Aún no hay sugerencias.</td></tr>`;
 
             document.getElementById("estado").textContent = "Actualizado: " + new Date().toLocaleString("es-ES");
+        }
+
+        let FILTRO = "todas";
+
+        function tieneAlergias(x) {
+            const m = mapaAlergias(x.alergias);
+            return Object.values(m).some(v => v && v.trim().length);
+        }
+
+        function setFiltro(k) { FILTRO = k; renderRSVP(); }
+
+        function renderRSVP() {
+            if (!DATA) return;
+            const rsvp = DATA.rsvp || [];
+            const filtros = [
+                ["todas", "Todas", rsvp.length],
+                ["asisten", "Asisten", rsvp.filter(x => String(x.asiste) === "si").length],
+                ["noasisten", "No asisten", rsvp.filter(x => String(x.asiste) === "no").length],
+                ["alergias", "Con alergias", rsvp.filter(tieneAlergias).length]
+            ];
+            document.getElementById("filtros").innerHTML = filtros.map(([k, lab, n]) =>
+                `<button onclick="setFiltro('${k}')" class="text-sm uppercase tracking-wider font-semibold rounded-full px-4 py-1.5 border transition ${FILTRO === k ? 'bg-weddingGreen text-white border-weddingGreen' : 'text-weddingGreen border-weddingGreen/40 hover:bg-weddingGreenLight/40'}">${lab} <span class="opacity-70">(${n})</span></button>`
+            ).join("");
+
+            let lista = rsvp.map((x, idx) => ({ x, idx }));
+            if (FILTRO === "asisten") lista = lista.filter(o => String(o.x.asiste) === "si");
+            else if (FILTRO === "noasisten") lista = lista.filter(o => String(o.x.asiste) === "no");
+            else if (FILTRO === "alergias") lista = lista.filter(o => tieneAlergias(o.x));
+
+            const rb = document.getElementById("rsvp-body");
+            if (!rsvp.length) {
+                rb.innerHTML = `<div class="bg-white/60 border border-weddingGold/15 rounded-2xl px-4 py-6 text-center text-weddingDark/50">Aún no hay confirmaciones.</div>`;
+            } else if (!lista.length) {
+                rb.innerHTML = `<div class="bg-white/60 border border-weddingGold/15 rounded-2xl px-4 py-6 text-center text-weddingDark/50">No hay familias con este filtro.</div>`;
+            } else {
+                rb.innerHTML = lista.map(o => familiaBloque(o.x, o.idx)).join("");
+            }
+        }
+
+        function borrarFamilia(fila, nombre) {
+            if (!confirm('¿Eliminar a "' + nombre + '" de la lista? Esta acción no se puede deshacer.')) return;
+            postPanel({ tipo: "borrarFamilia", fila: fila });
+            setTimeout(() => cargar(false), 700);
         }
 
         function esc(v) {

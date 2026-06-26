@@ -59,6 +59,9 @@ function doPost(e) {
       // Edición protegida con la clave del panel.
       if (data.clave !== CLAVE_PANEL) return json({ ok: false, error: "Clave incorrecta" });
       editarCelda(data.fila, data.campo, data.valor);
+    } else if (data.tipo === "borrarFamilia") {
+      if (data.clave !== CLAVE_PANEL) return json({ ok: false, error: "Clave incorrecta" });
+      if (data.fila) obtenerHoja(HOJA_RSVP).deleteRow(Number(data.fila));
     } else if (data.tipo === "editarCancion") {
       if (data.clave !== CLAVE_PANEL) return json({ ok: false, error: "Clave incorrecta" });
       editarCancion(data.id, data.campo, data.valor);
