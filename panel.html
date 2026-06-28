@@ -108,8 +108,8 @@
                     </div>
                     <div id="pool" class="p-3 min-h-[120px]" ondragover="permitirSoltar(event)" ondrop="soltarEn(event, null)"></div>
                 </div>
-                <!-- Mesas -->
-                <div id="mesas-cont" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+                <!-- Mesas (plano libre) -->
+                <div id="mesas-cont" class="relative border border-weddingGold/10 rounded-2xl bg-weddingGreenLight/10 overflow-auto min-h-[600px]"></div>
             </div>
         </div>
 
@@ -688,21 +688,39 @@
                 card(MESAS.tables.length, "Mesas") + card(plazas, "Plazas totales") +
                 card(asignados, "Asignados") + card(sinAsignar.length, "Sin asignar");
 
-            document.getElementById("mesas-cont").innerHTML = MESAS.tables.map(t => {
+            // Asigna posiciones por defecto a las mesas que aún no la tengan.
+            const ANCHO = 250, ALTO = 240;
+            MESAS.tables.forEach((t, i) => {
+                if (typeof t.x !== "number") t.x = 16 + (i % 3) * (ANCHO + 16);
+                if (typeof t.y !== "number") t.y = 16 + Math.floor(i / 3) * (ALTO + 16);
+            });
+            const cont = document.getElementById("mesas-cont");
+            cont.innerHTML = MESAS.tables.map(t => {
                 const ocupantes = guests.filter(g => MESAS.asignaciones[g.id] === t.id);
                 const lleno = ocupantes.length > t.capacidad;
-                return `<div class="bg-white/60 border border-weddingGold/15 rounded-2xl overflow-hidden" ondragover="permitirSoltar(event)" ondrop="soltarEn(event,'${t.id}')">
-                    <div class="px-4 py-3 bg-weddingGreenLight/40 flex items-center justify-between gap-2">
-                        <div class="min-w-0"><span class="font-semibold text-weddingGreen">${esc(t.nombre)}</span>
-                        <span class="text-xs text-weddingDark/45 ml-1">${iconoForma(t.forma)} ${esc(t.forma)}</span></div>
-                        <div class="flex items-center gap-3 flex-shrink-0">
+                return `<div id="mesa-${t.id}" class="absolute bg-white/80 border border-weddingGold/15 rounded-2xl overflow-hidden shadow-sm" style="left:${t.x}px; top:${t.y}px; width:${ANCHO}px" ondragover="permitirSoltar(event)" ondrop="soltarEn(event,'${t.id}')">
+                    <div class="px-3 py-2 bg-weddingGreenLight/50 flex items-center justify-between gap-2">
+                        <i class="fa-solid fa-up-down-left-right text-weddingDark/35 hover:text-weddingGreen" onpointerdown="iniciarMoverMesa(event,'${t.id}')" title="Mover mesa" style="cursor:move; touch-action:none;"></i>
+                        <div class="min-w-0 flex-1">
+                            <input value="${escAttr(t.nombre)}" onchange="renombrarMesa('${t.id}', this.value)" title="Renombrar mesa" class="font-semibold text-weddingGreen bg-transparent border border-transparent hover:border-weddingGold/40 focus:border-weddingGreen focus:bg-white rounded px-1 -ml-1 text-sm focus:outline-none w-full">
+                            <span class="block text-xs text-weddingDark/45 px-1">${iconoForma(t.forma)} ${esc(t.forma)}</span>
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
                             <span class="text-sm font-semibold ${lleno ? 'text-red-500' : 'text-weddingDark/60'}">${ocupantes.length}/${t.capacidad}</span>
                             <button onclick="borrarMesa('${t.id}')" class="text-red-400 hover:text-red-600" title="Eliminar mesa"><i class="fa-solid fa-trash text-xs"></i></button>
                         </div>
                     </div>
                     <div class="p-3 space-y-2 min-h-[80px]">${ocupantes.map(chipInvitado).join("") || '<p class="text-sm text-weddingDark/30 px-1 py-3 text-center">Arrastra invitados aquí</p>'}</div>
                 </div>`;
-            }).join("") || '<p class="text-sm text-weddingDark/50 col-span-full">Crea una mesa para empezar a organizar.</p>';
+            }).join("");
+            if (!MESAS.tables.length) {
+                cont.innerHTML = '<p class="text-sm text-weddingDark/50 p-4">Crea una mesa para empezar a organizar.</p>';
+            }
+            // Ajusta el tamaño del lienzo para que quepan todas las mesas.
+            const maxX = MESAS.tables.reduce((m, t) => Math.max(m, t.x + ANCHO), 0);
+            const maxY = MESAS.tables.reduce((m, t) => Math.max(m, t.y + ALTO), 0);
+            cont.style.minWidth = Math.max(maxX + 16, 0) + "px";
+            cont.style.minHeight = Math.max(maxY + 16, 600) + "px";
         }
 
         function arrastrar(e, id) { e.dataTransfer.setData("text/plain", id); e.dataTransfer.effectAllowed = "move"; }
@@ -765,6 +783,44 @@
             const capacidad = Math.max(1, Number(document.getElementById("mesa-capacidad").value) || 10);
             MESAS.tables.push({ id: "m" + Date.now(), nombre, forma, capacidad });
             cerrarModalMesa();
+            renderMesas();
+            guardarMesas();
+        }
+        // Mover una mesa por el lienzo (arrastre con pointer, funciona en táctil).
+        let moverEstado = null;
+        function iniciarMoverMesa(e, id) {
+            e.preventDefault();
+            const t = MESAS.tables.find(t => t.id === id);
+            const el = document.getElementById("mesa-" + id);
+            if (!t || !el) return;
+            moverEstado = { id, el, downX: e.clientX, downY: e.clientY, startX: t.x || 0, startY: t.y || 0, nx: t.x || 0, ny: t.y || 0 };
+            el.style.zIndex = 50; el.classList.add("ring-2", "ring-weddingGreen/40");
+            document.addEventListener("pointermove", moverMesa);
+            document.addEventListener("pointerup", soltarMesa);
+        }
+        function moverMesa(e) {
+            if (!moverEstado) return;
+            moverEstado.nx = Math.max(0, moverEstado.startX + (e.clientX - moverEstado.downX));
+            moverEstado.ny = Math.max(0, moverEstado.startY + (e.clientY - moverEstado.downY));
+            moverEstado.el.style.left = moverEstado.nx + "px";
+            moverEstado.el.style.top = moverEstado.ny + "px";
+        }
+        function soltarMesa() {
+            if (!moverEstado) return;
+            const t = MESAS.tables.find(t => t.id === moverEstado.id);
+            if (t) { t.x = moverEstado.nx; t.y = moverEstado.ny; }
+            moverEstado.el.style.zIndex = ""; moverEstado.el.classList.remove("ring-2", "ring-weddingGreen/40");
+            document.removeEventListener("pointermove", moverMesa);
+            document.removeEventListener("pointerup", soltarMesa);
+            moverEstado = null;
+            renderMesas();
+            guardarMesas();
+        }
+
+        function renombrarMesa(id, val) {
+            const t = MESAS.tables.find(t => t.id === id);
+            if (!t) return;
+            t.nombre = val.trim() || t.nombre;
             renderMesas();
             guardarMesas();
         }
