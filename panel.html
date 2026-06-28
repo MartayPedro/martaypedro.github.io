@@ -179,11 +179,11 @@
 
             let filas = personas.map(p => {
                 const a = alerg[p.nombre];
-                return `<div class="flex items-start gap-3 px-4 py-2 text-sm">
-                    <span class="w-2 h-2 mt-1.5 rounded-full ${a ? "bg-red-400" : "bg-weddingGold/40"} flex-shrink-0"></span>
-                    <span class="font-semibold text-weddingGreen flex-1 min-w-0">${esc(p.nombre)}</span>
-                    <span class="text-weddingDark/50 text-xs whitespace-nowrap">${p.tipo}</span>
-                    <span class="text-weddingDark/80 flex-1 text-right">${a ? '🍽️ ' + esc(a) : '<span class="text-weddingDark/30">—</span>'}</span>
+                return `<div class="flex items-center flex-wrap gap-x-3 gap-y-1 px-4 py-2 text-sm">
+                    <span class="w-2 h-2 rounded-full ${a ? "bg-red-400" : "bg-weddingGold/40"} flex-shrink-0"></span>
+                    <span class="font-semibold text-weddingGreen">${esc(p.nombre)}</span>
+                    <span class="text-weddingDark/45 text-xs whitespace-nowrap">${p.tipo}</span>
+                    ${a ? `<span class="text-weddingDark/80">· 🍽️ ${esc(a)}</span>` : ''}
                 </div>`;
             }).join("");
 
@@ -191,6 +191,11 @@
                 filas = `<div class="px-4 py-2 text-sm text-weddingDark/70">No asistirá.${x.comentarios ? " Motivo: " + esc(x.comentarios) : ""}</div>`;
             } else if (x.comentarios) {
                 filas += `<div class="px-4 py-2 text-sm text-weddingDark/70 border-t border-weddingGold/10"><i class="fa-solid fa-comment-dots text-weddingGold mr-1"></i> ${esc(x.comentarios)}</div>`;
+            }
+
+            // Nota privada de los novios (si la hay).
+            if (x.notas && String(x.notas).trim()) {
+                filas += `<div class="px-4 py-2 text-sm text-weddingGreen bg-weddingGold/10 border-t border-weddingGold/10"><i class="fa-solid fa-note-sticky text-weddingGold mr-1"></i> ${esc(x.notas)}</div>`;
             }
 
             return `<div class="bg-white/60 border border-weddingGold/15 rounded-2xl overflow-hidden">
@@ -226,7 +231,8 @@
                 + campoEdit("Nombres de los niños", f, "ninosNombres", x.ninosNombres, "text", "col-span-2")
                 + campoEdit("Nombres de los bebés", f, "bebesNombres", x.bebesNombres, "text", "col-span-2")
                 + campoEdit("Alergias por comensal", f, "alergias", x.alergias, "textarea", "col-span-2")
-                + campoEdit("Comentarios", f, "comentarios", x.comentarios, "textarea", "col-span-2");
+                + campoEdit("Comentarios (del invitado)", f, "comentarios", x.comentarios, "textarea", "col-span-2")
+                + campoEdit("Notas privadas (novios)", f, "notas", x.notas, "textarea", "col-span-2");
         }
 
         function campoEdit(label, fila, campo, valor, tipo, span) {
@@ -504,8 +510,8 @@
 
         function exportarCSV() {
             if (!DATA) return;
-            const cols = ["fecha","nombre","asiste","personas","acompanantes","ninos","bebes","ninosNombres","bebesNombres","alergias","comentarios"];
-            const cab = ["Fecha","Nombre","Asiste","Nº asistentes","Acompañantes","Niños","Bebés","Nombres niños","Nombres bebés","Alergias","Comentarios"];
+            const cols = ["fecha","nombre","asiste","personas","acompanantes","ninos","bebes","ninosNombres","bebesNombres","alergias","comentarios","notas"];
+            const cab = ["Fecha","Nombre","Asiste","Nº asistentes","Acompañantes","Niños","Bebés","Nombres niños","Nombres bebés","Alergias","Comentarios","Notas (novios)"];
             let csv = cab.join(";") + "\n";
             (DATA.rsvp||[]).forEach(x => {
                 csv += cols.map(c => '"' + String(x[c]==null?"":x[c]).replace(/"/g,'""') + '"').join(";") + "\n";

@@ -80,7 +80,7 @@ function editarCelda(fila, campo, valor) {
   var columnas = {
     nombre: 2, asiste: 3, personas: 4, acompanantes: 5,
     ninos: 6, bebes: 7, alergias: 8, comentarios: 9,
-    ninosNombres: 10, bebesNombres: 11
+    ninosNombres: 10, bebesNombres: 11, notas: 12
   };
   var col = columnas[campo];
   if (!col || !fila) return;
@@ -126,7 +126,8 @@ function leerRSVP() {
       alergias: f[7],
       comentarios: f[8],
       ninosNombres: f[9],
-      bebesNombres: f[10]
+      bebesNombres: f[10],
+      notas: f[11]
     });
   }
   return filas;
@@ -163,7 +164,7 @@ function guardarRSVP(data) {
     hoja.appendRow([
       "Fecha", "Nombre", "Asiste", "Nº asistentes", "Acompañantes",
       "Niños (menú infantil)", "Bebés (tronas)", "Alergias por comensal", "Comentarios",
-      "Nombres niños", "Nombres bebés"
+      "Nombres niños", "Nombres bebés", "Notas (novios)"
     ]);
   }
   hoja.appendRow([
@@ -177,7 +178,8 @@ function guardarRSVP(data) {
     formatearAlergias(data.alergias),
     data.comentarios || "",
     data.ninosNombres || "",
-    data.bebesNombres || ""
+    data.bebesNombres || "",
+    ""
   ]);
 }
 
