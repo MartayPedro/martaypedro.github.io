@@ -1119,7 +1119,13 @@
             document.getElementById("dietary-container").classList.add("hidden");
             document.getElementById("dietary-icon").className = "fa-regular fa-square-plus mr-2 text-sm";
             document.getElementById("step-attendance").classList.add("show");
-            document.getElementById("success-modal").classList.remove("hidden");
+
+            // Ocultamos el formulario por completo y mostramos solo el mensaje de gracias.
+            document.getElementById("rsvp-form").classList.add("hidden");
+            const exito = document.getElementById("success-modal");
+            exito.classList.remove("hidden", "mt-6");
+            // Llevamos la vista al mensaje para que no quede fuera de pantalla.
+            setTimeout(() => exito.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
         }
 
         // --- MUSIC PLAYLIST LOGIC ---
