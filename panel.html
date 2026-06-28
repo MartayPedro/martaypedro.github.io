@@ -635,7 +635,7 @@
         let ZOOM = 1;
 
         function cambiarZoom(delta) {
-            ZOOM = delta === 0 ? 1 : Math.min(1.5, Math.max(0.4, Math.round((ZOOM + delta) * 10) / 10));
+            ZOOM = delta === 0 ? 1 : Math.min(1, Math.max(0.3, Math.round((ZOOM + delta) * 10) / 10));
             document.getElementById("zoom-label").textContent = Math.round(ZOOM * 100) + "%";
             renderMesas();
         }
