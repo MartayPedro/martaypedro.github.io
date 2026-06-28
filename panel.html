@@ -95,6 +95,11 @@
                 <h2 class="font-serif text-xl text-weddingGreen font-light"><i class="fa-solid fa-chair text-weddingGold mr-2"></i>Organización de mesas</h2>
                 <div class="flex items-center gap-3 flex-wrap">
                     <span id="mesas-estado" class="text-sm text-weddingDark/50"></span>
+                    <div class="flex items-center border border-weddingGold/30 rounded-full overflow-hidden">
+                        <button onclick="cambiarZoom(-0.1)" class="px-3 py-2 text-weddingGreen hover:bg-weddingGreenLight/40" title="Alejar"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                        <button onclick="cambiarZoom(0)" id="zoom-label" class="px-2 py-2 text-sm text-weddingDark/60 font-semibold border-x border-weddingGold/30 min-w-[52px]" title="Restablecer zoom">100%</button>
+                        <button onclick="cambiarZoom(0.1)" class="px-3 py-2 text-weddingGreen hover:bg-weddingGreenLight/40" title="Acercar"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                    </div>
                     <button onclick="abrirNuevaMesa()" class="text-sm uppercase tracking-wider text-white font-semibold bg-weddingGreen rounded-full px-4 py-2 hover:bg-weddingGreen/90 transition"><i class="fa-solid fa-plus mr-1"></i> Nueva mesa</button>
                 </div>
             </div>
@@ -108,8 +113,10 @@
                     </div>
                     <div id="pool" class="p-3 min-h-[120px]" ondragover="permitirSoltar(event)" ondrop="soltarEn(event, null)"></div>
                 </div>
-                <!-- Mesas (plano libre) -->
-                <div id="mesas-cont" class="relative border border-weddingGold/10 rounded-2xl bg-weddingGreenLight/10 overflow-auto min-h-[600px]"></div>
+                <!-- Mesas (plano libre con zoom) -->
+                <div id="mesas-cont" class="relative border border-weddingGold/10 rounded-2xl bg-weddingGreenLight/10 overflow-auto min-h-[600px]">
+                    <div id="mesas-lienzo" class="relative origin-top-left"></div>
+                </div>
             </div>
         </div>
 
@@ -625,6 +632,13 @@
         /* ===================== MESAS ===================== */
         let MESAS = { tables: [], asignaciones: {} };
         let mesasTimer = null;
+        let ZOOM = 1;
+
+        function cambiarZoom(delta) {
+            ZOOM = delta === 0 ? 1 : Math.min(1.5, Math.max(0.4, Math.round((ZOOM + delta) * 10) / 10));
+            document.getElementById("zoom-label").textContent = Math.round(ZOOM * 100) + "%";
+            renderMesas();
+        }
 
         function cambiarTab(t) {
             document.getElementById("tab-datos").classList.toggle("hidden", t !== "datos");
@@ -695,7 +709,8 @@
                 if (typeof t.y !== "number") t.y = 16 + Math.floor(i / 3) * (ALTO + 16);
             });
             const cont = document.getElementById("mesas-cont");
-            cont.innerHTML = MESAS.tables.map(t => {
+            const lienzo = document.getElementById("mesas-lienzo");
+            lienzo.innerHTML = MESAS.tables.map(t => {
                 const ocupantes = guests.filter(g => MESAS.asignaciones[g.id] === t.id);
                 const lleno = ocupantes.length > t.capacidad;
                 return `<div id="mesa-${t.id}" class="absolute bg-white/80 border border-weddingGold/15 rounded-2xl overflow-hidden shadow-sm" style="left:${t.x}px; top:${t.y}px; width:${ANCHO}px" ondragover="permitirSoltar(event)" ondrop="soltarEn(event,'${t.id}')">
@@ -714,13 +729,16 @@
                 </div>`;
             }).join("");
             if (!MESAS.tables.length) {
-                cont.innerHTML = '<p class="text-sm text-weddingDark/50 p-4">Crea una mesa para empezar a organizar.</p>';
+                lienzo.innerHTML = '<p class="text-sm text-weddingDark/50 p-4">Crea una mesa para empezar a organizar.</p>';
             }
-            // Ajusta el tamaño del lienzo para que quepan todas las mesas.
-            const maxX = MESAS.tables.reduce((m, t) => Math.max(m, t.x + ANCHO), 0);
-            const maxY = MESAS.tables.reduce((m, t) => Math.max(m, t.y + ALTO), 0);
-            cont.style.minWidth = Math.max(maxX + 16, 0) + "px";
-            cont.style.minHeight = Math.max(maxY + 16, 600) + "px";
+            // Ajusta el tamaño del lienzo (sin escalar) y del contenedor (escalado) para el scroll.
+            const maxX = MESAS.tables.reduce((m, t) => Math.max(m, t.x + ANCHO), 0) + 16;
+            const maxY = MESAS.tables.reduce((m, t) => Math.max(m, t.y + ALTO), 0) + 16;
+            lienzo.style.width = maxX + "px";
+            lienzo.style.height = maxY + "px";
+            lienzo.style.transform = "scale(" + ZOOM + ")";
+            cont.style.minWidth = (maxX * ZOOM) + "px";
+            cont.style.minHeight = Math.max(maxY * ZOOM, 600) + "px";
         }
 
         function arrastrar(e, id) { e.dataTransfer.setData("text/plain", id); e.dataTransfer.effectAllowed = "move"; }
@@ -800,8 +818,9 @@
         }
         function moverMesa(e) {
             if (!moverEstado) return;
-            moverEstado.nx = Math.max(0, moverEstado.startX + (e.clientX - moverEstado.downX));
-            moverEstado.ny = Math.max(0, moverEstado.startY + (e.clientY - moverEstado.downY));
+            // Las coordenadas son del lienzo sin escalar: dividimos el desplazamiento por el zoom.
+            moverEstado.nx = Math.max(0, moverEstado.startX + (e.clientX - moverEstado.downX) / ZOOM);
+            moverEstado.ny = Math.max(0, moverEstado.startY + (e.clientY - moverEstado.downY) / ZOOM);
             moverEstado.el.style.left = moverEstado.nx + "px";
             moverEstado.el.style.top = moverEstado.ny + "px";
         }
