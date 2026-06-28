@@ -53,6 +53,13 @@
             </div>
         </div>
 
+        <!-- Pestañas -->
+        <div class="flex gap-2 mb-8 border-b border-weddingGold/20">
+            <button id="tabbtn-datos" onclick="cambiarTab('datos')" class="tabbtn px-4 py-2 text-sm uppercase tracking-wider font-semibold border-b-2 border-weddingGreen text-weddingGreen -mb-px"><i class="fa-solid fa-envelope-open-text mr-1"></i> Confirmaciones</button>
+            <button id="tabbtn-mesas" onclick="cambiarTab('mesas')" class="tabbtn px-4 py-2 text-sm uppercase tracking-wider font-semibold border-b-2 border-transparent text-weddingDark/50 hover:text-weddingGreen -mb-px"><i class="fa-solid fa-chair mr-1"></i> Mesas</button>
+        </div>
+
+        <div id="tab-datos">
         <!-- Resumen -->
         <div id="resumen" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-10"></div>
 
@@ -79,6 +86,50 @@
             <div><span class="block text-[11px] uppercase tracking-wider text-weddingGreen font-semibold mb-1">Artista</span><input id="nueva-artista" class="bg-white border border-weddingGold/30 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-weddingGreen/30"></div>
             <div><span class="block text-[11px] uppercase tracking-wider text-weddingGreen font-semibold mb-1">Propuesta por</span><input id="nueva-proponente" class="bg-white border border-weddingGold/30 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-weddingGreen/30"></div>
             <button onclick="anadirCancion()" class="text-sm uppercase tracking-wider text-white font-semibold bg-weddingGreen rounded-lg px-4 py-2 hover:bg-weddingGreen/90 transition"><i class="fa-solid fa-plus mr-1"></i> Añadir</button>
+        </div>
+        </div><!-- /tab-datos -->
+
+        <!-- Pestaña Mesas -->
+        <div id="tab-mesas" class="hidden">
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <h2 class="font-serif text-xl text-weddingGreen font-light"><i class="fa-solid fa-chair text-weddingGold mr-2"></i>Organización de mesas</h2>
+                <div class="flex items-center gap-3 flex-wrap">
+                    <span id="mesas-estado" class="text-sm text-weddingDark/50"></span>
+                    <button onclick="abrirNuevaMesa()" class="text-sm uppercase tracking-wider text-white font-semibold bg-weddingGreen rounded-full px-4 py-2 hover:bg-weddingGreen/90 transition"><i class="fa-solid fa-plus mr-1"></i> Nueva mesa</button>
+                </div>
+            </div>
+            <div class="grid lg:grid-cols-[300px_1fr] gap-6 items-start">
+                <!-- Invitados sin asignar -->
+                <div class="bg-white/60 border border-weddingGold/15 rounded-2xl overflow-hidden">
+                    <div class="px-4 py-3 bg-weddingGreenLight/40 text-weddingGreen text-sm uppercase tracking-wider font-semibold flex items-center justify-between">
+                        <span>Sin asignar</span><span id="pool-count" class="opacity-70"></span>
+                    </div>
+                    <div id="pool" class="p-3 space-y-2 min-h-[120px]" ondragover="permitirSoltar(event)" ondrop="soltarEn(event, null)"></div>
+                </div>
+                <!-- Mesas -->
+                <div id="mesas-cont" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+            </div>
+        </div>
+
+        <!-- Modal nueva mesa -->
+        <div id="modal-mesa" class="hidden fixed inset-0 z-50 bg-black/40 flex items-center justify-center px-6">
+            <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-lg">
+                <h3 class="font-serif text-xl text-weddingGreen mb-4">Nueva mesa</h3>
+                <label class="block text-[11px] uppercase tracking-wider text-weddingGreen font-semibold mb-1">Nombre</label>
+                <input id="mesa-nombre" class="w-full bg-white border border-weddingGold/30 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-weddingGreen/30" placeholder="Ej. Mesa 1, Familia, Amigos...">
+                <label class="block text-[11px] uppercase tracking-wider text-weddingGreen font-semibold mb-1">Forma</label>
+                <select id="mesa-forma" onchange="ajustarCapacidad()" class="w-full bg-white border border-weddingGold/30 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-weddingGreen/30">
+                    <option value="redonda">Redonda</option>
+                    <option value="rectangular">Rectangular</option>
+                    <option value="presidencia">Presidencia</option>
+                </select>
+                <label class="block text-[11px] uppercase tracking-wider text-weddingGreen font-semibold mb-1">Capacidad (comensales)</label>
+                <input id="mesa-capacidad" type="number" min="1" value="10" class="w-full bg-white border border-weddingGold/30 rounded-lg px-3 py-2 text-sm mb-5 focus:outline-none focus:ring-2 focus:ring-weddingGreen/30">
+                <div class="flex gap-2 justify-end">
+                    <button onclick="cerrarModalMesa()" class="px-4 py-2 text-sm uppercase tracking-wider text-weddingDark/60 font-semibold rounded-full hover:bg-weddingGreenLight/40">Cancelar</button>
+                    <button onclick="crearMesa()" class="px-4 py-2 text-sm uppercase tracking-wider text-white font-semibold bg-weddingGreen rounded-full hover:bg-weddingGreen/90">Crear</button>
+                </div>
+            </div>
         </div>
 
         <p id="estado" class="text-center text-sm text-weddingDark/50 mt-8"></p>
@@ -341,9 +392,12 @@
 
         function pintar(data) {
             DATA = data;
+            MESAS = (data.mesas && data.mesas.tables) ? data.mesas : { tables: [], asignaciones: {} };
+            if (!MESAS.asignaciones) MESAS.asignaciones = {};
             renderResumen();
             renderRSVP();
             renderPlaylist();
+            renderMesas();
             document.getElementById("estado").textContent = "Actualizado: " + new Date().toLocaleString("es-ES");
         }
 
@@ -408,10 +462,14 @@
         function renderRSVP() {
             if (!DATA) return;
             const rsvp = DATA.rsvp || [];
+            const esAdulto = p => p.tipo === "Adulto";
+            const esNino = p => /^Niño/.test(p.tipo);
             const filtros = [
                 ["todas", "Todas", rsvp.length],
                 ["asisten", "Asisten", rsvp.filter(x => String(x.asiste) === "si").length],
                 ["noasisten", "No asisten", rsvp.filter(x => String(x.asiste) === "no").length],
+                ["adultos", "Adultos", contarTipo(rsvp, esAdulto)],
+                ["ninos", "Niños", contarTipo(rsvp, esNino)],
                 ["alergias", "Con alergias", rsvp.filter(tieneAlergias).length]
             ];
             document.getElementById("filtros").innerHTML = filtros.map(([k, lab, n]) =>
@@ -420,11 +478,10 @@
 
             const rb = document.getElementById("rsvp-body");
 
-            // El filtro de alergias muestra PERSONAS concretas, no familias enteras.
-            if (FILTRO === "alergias") {
-                rb.innerHTML = renderListaAlergias(rsvp);
-                return;
-            }
+            // Filtros por persona (no por familia).
+            if (FILTRO === "alergias") { rb.innerHTML = renderListaAlergias(rsvp); return; }
+            if (FILTRO === "adultos") { rb.innerHTML = renderListaPersonas(rsvp, esAdulto, "adulto(s)"); return; }
+            if (FILTRO === "ninos") { rb.innerHTML = renderListaPersonas(rsvp, esNino, "niño(s)"); return; }
 
             let lista = rsvp.map((x, idx) => ({ x, idx }));
             if (FILTRO === "asisten") lista = lista.filter(o => String(o.x.asiste) === "si");
@@ -437,6 +494,36 @@
             } else {
                 rb.innerHTML = lista.map(o => familiaBloque(o.x, o.idx)).join("");
             }
+        }
+
+        // Cuenta comensales (de familias que asisten) que cumplen un criterio.
+        function contarTipo(rsvp, pred) {
+            let n = 0;
+            rsvp.forEach(x => { if (String(x.asiste) === "si") personasFamilia(x).forEach(p => { if (pred(p)) n++; }); });
+            return n;
+        }
+
+        // Lista plana de personas que cumplen un criterio (con familia y alergia).
+        function renderListaPersonas(rsvp, pred, etiqueta) {
+            const items = [];
+            rsvp.forEach(x => {
+                if (String(x.asiste) !== "si") return;
+                const alerg = mapaAlergias(x.alergias);
+                personasFamilia(x).forEach(p => { if (pred(p)) items.push({ familia: x.nombre, persona: p.nombre, tipo: p.tipo, alergia: alerg[p.nombre] }); });
+            });
+            if (!items.length) return `<div class="bg-white/60 border border-weddingGold/15 rounded-2xl px-4 py-6 text-center text-weddingDark/50">No hay ${etiqueta}.</div>`;
+            const filas = items.map(it => `
+                <div class="flex items-center flex-wrap gap-x-3 gap-y-1 px-4 py-3 border-b border-weddingGold/10 last:border-0">
+                    <span class="w-2 h-2 rounded-full ${it.alergia ? 'bg-red-400' : 'bg-weddingGold/40'} flex-shrink-0"></span>
+                    <span class="font-semibold text-weddingGreen">${esc(it.persona)}</span>
+                    <span class="text-weddingDark/45 text-xs">${it.tipo}</span>
+                    <span class="text-sm text-weddingDark/40">· Familia de ${esc(it.familia)}</span>
+                    ${it.alergia ? `<span class="text-weddingDark/80">· 🍽️ ${esc(it.alergia)}</span>` : ''}
+                </div>`).join("");
+            return `<div class="bg-white/60 border border-weddingGold/15 rounded-2xl overflow-hidden">
+                <div class="px-4 py-2 bg-weddingGreenLight/40 text-weddingGreen text-sm uppercase tracking-wider font-semibold">${items.length} ${etiqueta}</div>
+                ${filas}
+            </div>`;
         }
 
         // Lista plana de comensales con alergia (con su familia y el detalle).
@@ -521,6 +608,127 @@
             a.href = URL.createObjectURL(blob);
             a.download = "confirmaciones-boda.csv";
             a.click();
+        }
+
+        /* ===================== MESAS ===================== */
+        let MESAS = { tables: [], asignaciones: {} };
+        let mesasTimer = null;
+
+        function cambiarTab(t) {
+            document.getElementById("tab-datos").classList.toggle("hidden", t !== "datos");
+            document.getElementById("tab-mesas").classList.toggle("hidden", t !== "mesas");
+            const act = "tabbtn px-4 py-2 text-sm uppercase tracking-wider font-semibold border-b-2 -mb-px border-weddingGreen text-weddingGreen";
+            const ina = "tabbtn px-4 py-2 text-sm uppercase tracking-wider font-semibold border-b-2 -mb-px border-transparent text-weddingDark/50 hover:text-weddingGreen";
+            document.getElementById("tabbtn-datos").className = t === "datos" ? act : ina;
+            document.getElementById("tabbtn-mesas").className = t === "mesas" ? act : ina;
+            if (t === "mesas") renderMesas();
+        }
+
+        // Lista de todos los comensales que asisten, con id estable.
+        function invitadosTodos() {
+            const arr = [];
+            (DATA && DATA.rsvp || []).forEach(x => {
+                if (String(x.asiste) !== "si") return;
+                const alerg = mapaAlergias(x.alergias);
+                personasFamilia(x).forEach((p, i) => {
+                    arr.push({ id: x.fila + "#" + i, nombre: p.nombre, tipo: p.tipo, familia: x.nombre, alergia: alerg[p.nombre] || "" });
+                });
+            });
+            return arr;
+        }
+
+        function iconoForma(f) { return f === "redonda" ? "⚪" : f === "rectangular" ? "▭" : "⭐"; }
+
+        function chipInvitado(g) {
+            const tipoCorto = g.tipo.replace(" (menú infantil)", "").replace(" (trona)", "");
+            return `<div draggable="true" ondragstart="arrastrar(event,'${g.id}')" title="Familia de ${escAttr(g.familia)}${g.alergia ? ' · ' + escAttr(g.alergia) : ''}" class="cursor-grab active:cursor-grabbing bg-white border border-weddingGold/30 rounded-xl px-3 py-2 text-sm flex items-center gap-2 hover:border-weddingGreen">
+                <i class="fa-solid fa-grip-vertical text-weddingDark/30 text-xs"></i>
+                <span class="font-semibold text-weddingGreen">${esc(g.nombre)}</span>
+                ${g.alergia ? '🍽️' : ''}
+                <span class="text-xs text-weddingDark/40 ml-auto">${tipoCorto}</span>
+            </div>`;
+        }
+
+        function renderMesas() {
+            if (!DATA) return;
+            const guests = invitadosTodos();
+            const ids = {}; guests.forEach(g => ids[g.id] = true);
+            // Limpia asignaciones de invitados que ya no existen.
+            Object.keys(MESAS.asignaciones).forEach(id => { if (!ids[id]) delete MESAS.asignaciones[id]; });
+
+            const sinAsignar = guests.filter(g => !MESAS.asignaciones[g.id]);
+            document.getElementById("pool").innerHTML = sinAsignar.map(chipInvitado).join("") || '<p class="text-sm text-weddingDark/40 px-1 py-2">Todos asignados 🎉</p>';
+            document.getElementById("pool-count").textContent = sinAsignar.length;
+
+            document.getElementById("mesas-cont").innerHTML = MESAS.tables.map(t => {
+                const ocupantes = guests.filter(g => MESAS.asignaciones[g.id] === t.id);
+                const lleno = ocupantes.length > t.capacidad;
+                return `<div class="bg-white/60 border border-weddingGold/15 rounded-2xl overflow-hidden" ondragover="permitirSoltar(event)" ondrop="soltarEn(event,'${t.id}')">
+                    <div class="px-4 py-3 bg-weddingGreenLight/40 flex items-center justify-between gap-2">
+                        <div class="min-w-0"><span class="font-semibold text-weddingGreen">${esc(t.nombre)}</span>
+                        <span class="text-xs text-weddingDark/45 ml-1">${iconoForma(t.forma)} ${esc(t.forma)}</span></div>
+                        <div class="flex items-center gap-3 flex-shrink-0">
+                            <span class="text-sm font-semibold ${lleno ? 'text-red-500' : 'text-weddingDark/60'}">${ocupantes.length}/${t.capacidad}</span>
+                            <button onclick="borrarMesa('${t.id}')" class="text-red-400 hover:text-red-600" title="Eliminar mesa"><i class="fa-solid fa-trash text-xs"></i></button>
+                        </div>
+                    </div>
+                    <div class="p-3 space-y-2 min-h-[80px]">${ocupantes.map(chipInvitado).join("") || '<p class="text-sm text-weddingDark/30 px-1 py-3 text-center">Arrastra invitados aquí</p>'}</div>
+                </div>`;
+            }).join("") || '<p class="text-sm text-weddingDark/50 col-span-full">Crea una mesa para empezar a organizar.</p>';
+        }
+
+        function arrastrar(e, id) { e.dataTransfer.setData("text/plain", id); e.dataTransfer.effectAllowed = "move"; }
+        function permitirSoltar(e) { e.preventDefault(); }
+        function soltarEn(e, tableId) {
+            e.preventDefault();
+            const id = e.dataTransfer.getData("text/plain");
+            if (!id) return;
+            if (tableId === null) delete MESAS.asignaciones[id];
+            else MESAS.asignaciones[id] = tableId;
+            renderMesas();
+            guardarMesas();
+        }
+
+        function abrirNuevaMesa() {
+            document.getElementById("mesa-nombre").value = "Mesa " + (MESAS.tables.length + 1);
+            document.getElementById("mesa-forma").value = "redonda";
+            ajustarCapacidad();
+            document.getElementById("modal-mesa").classList.remove("hidden");
+            document.getElementById("mesa-nombre").focus();
+        }
+        function cerrarModalMesa() { document.getElementById("modal-mesa").classList.add("hidden"); }
+        function ajustarCapacidad() {
+            const cap = { redonda: 10, rectangular: 20, presidencia: 6 }[document.getElementById("mesa-forma").value];
+            if (cap) document.getElementById("mesa-capacidad").value = cap;
+        }
+        function crearMesa() {
+            const nombre = document.getElementById("mesa-nombre").value.trim() || ("Mesa " + (MESAS.tables.length + 1));
+            const forma = document.getElementById("mesa-forma").value;
+            const capacidad = Math.max(1, Number(document.getElementById("mesa-capacidad").value) || 10);
+            MESAS.tables.push({ id: "m" + Date.now(), nombre, forma, capacidad });
+            cerrarModalMesa();
+            renderMesas();
+            guardarMesas();
+        }
+        function borrarMesa(id) {
+            if (!confirm("¿Eliminar esta mesa? Sus invitados volverán a 'Sin asignar'.")) return;
+            MESAS.tables = MESAS.tables.filter(t => t.id !== id);
+            Object.keys(MESAS.asignaciones).forEach(g => { if (MESAS.asignaciones[g] === id) delete MESAS.asignaciones[g]; });
+            renderMesas();
+            guardarMesas();
+        }
+
+        function guardarMesas() {
+            const est = document.getElementById("mesas-estado");
+            if (est) est.textContent = "Guardando...";
+            clearTimeout(mesasTimer);
+            mesasTimer = setTimeout(() => {
+                postPanel({ tipo: "guardarMesas", mesas: MESAS });
+                if (est) {
+                    est.textContent = "Guardado ✓";
+                    setTimeout(() => { if (est.textContent === "Guardado ✓") est.textContent = ""; }, 2000);
+                }
+            }, 600);
         }
 
         // Si ya hay clave en la sesión, entra directo.

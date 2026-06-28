@@ -21,6 +21,7 @@
 
 var HOJA_RSVP = "RSVP";
 var HOJA_PLAYLIST = "Playlist";
+var HOJA_CONFIG = "Config"; // guarda la distribución de mesas (JSON en A1)
 
 // ⚠️ CAMBIA esta clave por una tuya. Es la contraseña para entrar al panel.
 var CLAVE_PANEL = "marta-pedro-2026";
@@ -36,7 +37,8 @@ function doGet(e) {
         ok: true,
         rsvp: leerRSVP(),
         canciones: leerCanciones(),
-        resumen: calcularResumen()
+        resumen: calcularResumen(),
+        mesas: leerMesas()
       });
     }
     // Petición pública: solo la playlist.
@@ -62,6 +64,9 @@ function doPost(e) {
     } else if (data.tipo === "borrarFamilia") {
       if (data.clave !== CLAVE_PANEL) return json({ ok: false, error: "Clave incorrecta" });
       if (data.fila) obtenerHoja(HOJA_RSVP).deleteRow(Number(data.fila));
+    } else if (data.tipo === "guardarMesas") {
+      if (data.clave !== CLAVE_PANEL) return json({ ok: false, error: "Clave incorrecta" });
+      obtenerHoja(HOJA_CONFIG).getRange(1, 1).setValue(JSON.stringify(data.mesas || {}));
     } else if (data.tipo === "editarCancion") {
       if (data.clave !== CLAVE_PANEL) return json({ ok: false, error: "Clave incorrecta" });
       editarCancion(data.id, data.campo, data.valor);
@@ -131,6 +136,20 @@ function leerRSVP() {
     });
   }
   return filas;
+}
+
+function leerMesas() {
+  var hoja = obtenerHoja(HOJA_CONFIG);
+  var valor = hoja.getRange(1, 1).getValue();
+  if (!valor) return { tables: [], asignaciones: {} };
+  try {
+    var obj = JSON.parse(valor);
+    if (!obj.tables) obj.tables = [];
+    if (!obj.asignaciones) obj.asignaciones = {};
+    return obj;
+  } catch (e) {
+    return { tables: [], asignaciones: {} };
+  }
 }
 
 function calcularResumen() {
