@@ -150,15 +150,24 @@
             return m;
         }
 
+        // Genera la lista de nombres respetando los introducidos y rellenando el resto.
+        function listaNombres(str, count, prefijo) {
+            const nombres = String(str || "").split(",").map(s => s.trim()).filter(Boolean);
+            const total = Math.max(Math.max(0, Number(count) || 0), nombres.length);
+            const out = [];
+            for (let i = 0; i < total; i++) out.push(nombres[i] || (prefijo + " " + (i + 1)));
+            return out;
+        }
+
         // Lista de personas de una familia (con su tipo).
         function personasFamilia(x) {
             const lista = [{ nombre: x.nombre || "(sin nombre)", tipo: "Adulto" }];
             String(x.acompanantes || "").split(",").map(s => s.trim()).filter(Boolean)
                 .forEach(n => lista.push({ nombre: n, tipo: "Adulto" }));
-            const nNinos = Number(x.ninos) || 0;
-            for (let i = 1; i <= nNinos; i++) lista.push({ nombre: "Niño/a " + i, tipo: "Niño (menú infantil)" });
-            const nBebes = Number(x.bebes) || 0;
-            for (let i = 1; i <= nBebes; i++) lista.push({ nombre: "Bebé " + i, tipo: "Bebé (trona)" });
+            listaNombres(x.ninosNombres, x.ninos, "Niño/a")
+                .forEach(n => lista.push({ nombre: n, tipo: "Niño (menú infantil)" }));
+            listaNombres(x.bebesNombres, x.bebes, "Bebé")
+                .forEach(n => lista.push({ nombre: n, tipo: "Bebé (trona)" }));
             return lista;
         }
 
@@ -214,6 +223,8 @@
                 + campoEdit("Acompañantes", f, "acompanantes", x.acompanantes, "text", "col-span-2")
                 + campoEdit("Niños (menú)", f, "ninos", x.ninos, "number")
                 + campoEdit("Bebés (tronas)", f, "bebes", x.bebes, "number")
+                + campoEdit("Nombres de los niños", f, "ninosNombres", x.ninosNombres, "text", "col-span-2")
+                + campoEdit("Nombres de los bebés", f, "bebesNombres", x.bebesNombres, "text", "col-span-2")
                 + campoEdit("Alergias por comensal", f, "alergias", x.alergias, "textarea", "col-span-2")
                 + campoEdit("Comentarios", f, "comentarios", x.comentarios, "textarea", "col-span-2");
         }
@@ -389,12 +400,18 @@
                 `<button onclick="setFiltro('${k}')" class="text-sm uppercase tracking-wider font-semibold rounded-full px-4 py-1.5 border transition ${FILTRO === k ? 'bg-weddingGreen text-white border-weddingGreen' : 'text-weddingGreen border-weddingGreen/40 hover:bg-weddingGreenLight/40'}">${lab} <span class="opacity-70">(${n})</span></button>`
             ).join("");
 
+            const rb = document.getElementById("rsvp-body");
+
+            // El filtro de alergias muestra PERSONAS concretas, no familias enteras.
+            if (FILTRO === "alergias") {
+                rb.innerHTML = renderListaAlergias(rsvp);
+                return;
+            }
+
             let lista = rsvp.map((x, idx) => ({ x, idx }));
             if (FILTRO === "asisten") lista = lista.filter(o => String(o.x.asiste) === "si");
             else if (FILTRO === "noasisten") lista = lista.filter(o => String(o.x.asiste) === "no");
-            else if (FILTRO === "alergias") lista = lista.filter(o => tieneAlergias(o.x));
 
-            const rb = document.getElementById("rsvp-body");
             if (!rsvp.length) {
                 rb.innerHTML = `<div class="bg-white/60 border border-weddingGold/15 rounded-2xl px-4 py-6 text-center text-weddingDark/50">Aún no hay confirmaciones.</div>`;
             } else if (!lista.length) {
@@ -402,6 +419,36 @@
             } else {
                 rb.innerHTML = lista.map(o => familiaBloque(o.x, o.idx)).join("");
             }
+        }
+
+        // Lista plana de comensales con alergia (con su familia y el detalle).
+        function renderListaAlergias(rsvp) {
+            const items = [];
+            rsvp.forEach(x => {
+                if (String(x.asiste) !== "si") return;
+                const alerg = mapaAlergias(x.alergias);
+                personasFamilia(x).forEach(p => {
+                    const a = alerg[p.nombre];
+                    if (a && a.trim().length) items.push({ familia: x.nombre, persona: p.nombre, tipo: p.tipo, alergia: a });
+                });
+            });
+            if (!items.length) {
+                return `<div class="bg-white/60 border border-weddingGold/15 rounded-2xl px-4 py-6 text-center text-weddingDark/50">No hay comensales con alergias registradas.</div>`;
+            }
+            const filas = items.map(it => `
+                <div class="flex items-start gap-3 px-4 py-3 border-b border-weddingGold/10 last:border-0">
+                    <span class="w-2 h-2 mt-2 rounded-full bg-red-400 flex-shrink-0"></span>
+                    <div class="flex-1 min-w-0">
+                        <span class="font-semibold text-weddingGreen">${esc(it.persona)}</span>
+                        <span class="text-weddingDark/50 text-sm ml-2">${it.tipo}</span>
+                        <span class="block text-sm text-weddingDark/40">Familia de ${esc(it.familia)}</span>
+                    </div>
+                    <div class="text-weddingDark/80 text-right flex-1">🍽️ ${esc(it.alergia)}</div>
+                </div>`).join("");
+            return `<div class="bg-white/60 border border-weddingGold/15 rounded-2xl overflow-hidden">
+                <div class="px-4 py-2 bg-weddingGreenLight/40 text-weddingGreen text-sm uppercase tracking-wider font-semibold">${items.length} comensal(es) con alergias</div>
+                ${filas}
+            </div>`;
         }
 
         function borrarFamilia(fila, nombre) {
@@ -421,8 +468,8 @@
 
         function exportarCSV() {
             if (!DATA) return;
-            const cols = ["fecha","nombre","asiste","personas","acompanantes","ninos","bebes","alergias","comentarios"];
-            const cab = ["Fecha","Nombre","Asiste","Nº asistentes","Acompañantes","Niños","Bebés","Alergias","Comentarios"];
+            const cols = ["fecha","nombre","asiste","personas","acompanantes","ninos","bebes","ninosNombres","bebesNombres","alergias","comentarios"];
+            const cab = ["Fecha","Nombre","Asiste","Nº asistentes","Acompañantes","Niños","Bebés","Nombres niños","Nombres bebés","Alergias","Comentarios"];
             let csv = cab.join(";") + "\n";
             (DATA.rsvp||[]).forEach(x => {
                 csv += cols.map(c => '"' + String(x[c]==null?"":x[c]).replace(/"/g,'""') + '"').join(";") + "\n";

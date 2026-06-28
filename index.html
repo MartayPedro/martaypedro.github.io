@@ -1083,6 +1083,9 @@
             const guestChildren = String(childInputs.length);
             const kidsMenu = String(childInputs.length); // nº de niños = nº de menús infantiles
             const guestBabies = String(babyInputs.length); // bebés = tronas, sin menú
+            // Nombres con el mismo respaldo que el bloque de alérgenos (para que casen las claves).
+            const childNames = childInputs.map((i, idx) => i.value.trim() || ("Niño/a " + (idx + 1))).join(", ");
+            const babyNames = babyInputs.map((i, idx) => i.value.trim() || ("Bebé " + (idx + 1))).join(", ");
             const comment = document.getElementById("guest-comment").value;
 
             // Alérgenos por comensal.
@@ -1105,6 +1108,8 @@
                 menuInfantil: kidsMenu,
                 bebes: guestBabies,
                 tronas: guestBabies,
+                ninosNombres: childNames,
+                bebesNombres: babyNames,
                 alergias: alergias,
                 comentarios: comment
             });
