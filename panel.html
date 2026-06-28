@@ -385,7 +385,14 @@
             return Object.values(m).some(v => v && v.trim().length);
         }
 
-        function setFiltro(k) { FILTRO = k; renderRSVP(); }
+        let SUBFILTRO = null;
+        function setFiltro(k) { FILTRO = k; if (k !== "alergias") SUBFILTRO = null; renderRSVP(); }
+        function setSubFiltro(t) { SUBFILTRO = (SUBFILTRO === t) ? null : t; renderRSVP(); }
+
+        // Separa el texto de alergias de un comensal en alérgenos individuales.
+        function alergenosDe(texto) {
+            return String(texto || "").split(/[,\/]/).map(s => s.trim()).filter(Boolean);
+        }
 
         function renderRSVP() {
             if (!DATA) return;
@@ -429,13 +436,26 @@
                 const alerg = mapaAlergias(x.alergias);
                 personasFamilia(x).forEach(p => {
                     const a = alerg[p.nombre];
-                    if (a && a.trim().length) items.push({ familia: x.nombre, persona: p.nombre, tipo: p.tipo, alergia: a });
+                    if (a && a.trim().length) items.push({ familia: x.nombre, persona: p.nombre, tipo: p.tipo, alergia: a, tokens: alergenosDe(a) });
                 });
             });
             if (!items.length) {
                 return `<div class="bg-white/60 border border-weddingGold/15 rounded-2xl px-4 py-6 text-center text-weddingDark/50">No hay comensales con alergias registradas.</div>`;
             }
-            const filas = items.map(it => `
+
+            // Sub-filtros: un chip por cada alérgeno detectado (con su recuento).
+            const cuenta = {};
+            items.forEach(it => it.tokens.forEach(t => { cuenta[t] = (cuenta[t] || 0) + 1; }));
+            const tipos = Object.keys(cuenta).sort((a, b) => a.localeCompare(b, "es"));
+            if (SUBFILTRO && !cuenta[SUBFILTRO]) SUBFILTRO = null;
+            const chip = (t, lab, n, activo) => `<button onclick="setSubFiltro(${t === null ? 'null' : "'" + t.replace(/'/g, "\\'") + "'"})" class="text-sm rounded-full px-3 py-1 border transition ${activo ? 'bg-weddingGold text-white border-weddingGold' : 'text-weddingDark/70 border-weddingGold/40 hover:bg-weddingGold/10'}">${esc(lab)}${n != null ? ` <span class="opacity-70">(${n})</span>` : ''}</button>`;
+            const chips = `<div class="flex flex-wrap gap-2 px-4 py-3 bg-weddingGreenLight/30 border-b border-weddingGold/10">
+                ${chip(null, "Todas", items.length, !SUBFILTRO)}
+                ${tipos.map(t => chip(t, t, cuenta[t], SUBFILTRO === t)).join("")}
+            </div>`;
+
+            const visibles = SUBFILTRO ? items.filter(it => it.tokens.includes(SUBFILTRO)) : items;
+            const filas = visibles.map(it => `
                 <div class="flex items-start gap-3 px-4 py-3 border-b border-weddingGold/10 last:border-0">
                     <span class="w-2 h-2 mt-2 rounded-full bg-red-400 flex-shrink-0"></span>
                     <div class="flex-1 min-w-0">
@@ -445,8 +465,12 @@
                     </div>
                     <div class="text-weddingDark/80 text-right flex-1">🍽️ ${esc(it.alergia)}</div>
                 </div>`).join("");
+            const titulo = SUBFILTRO
+                ? `${visibles.length} comensal(es) con "${esc(SUBFILTRO)}"`
+                : `${items.length} comensal(es) con alergias`;
             return `<div class="bg-white/60 border border-weddingGold/15 rounded-2xl overflow-hidden">
-                <div class="px-4 py-2 bg-weddingGreenLight/40 text-weddingGreen text-sm uppercase tracking-wider font-semibold">${items.length} comensal(es) con alergias</div>
+                ${chips}
+                <div class="px-4 py-2 bg-weddingGreenLight/40 text-weddingGreen text-sm uppercase tracking-wider font-semibold">${titulo}</div>
                 ${filas}
             </div>`;
         }
