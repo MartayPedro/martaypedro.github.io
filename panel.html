@@ -247,13 +247,11 @@
         }
 
         function guardarCampo(el) {
-            const clave = sessionStorage.getItem("panelClave");
-            fetch(APPS_SCRIPT_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ tipo: "editar", clave: clave, fila: el.dataset.fila, campo: el.dataset.campo, valor: el.value })
-            }).catch(() => {});
+            postPanel({ tipo: "editar", fila: el.dataset.fila, campo: el.dataset.campo, valor: el.value });
+            // Actualiza el modelo local y refresca el resumen al instante.
+            const f = (DATA.rsvp || []).find(r => String(r.fila) === String(el.dataset.fila));
+            if (f) f[el.dataset.campo] = el.value;
+            renderResumen();
             el.classList.add("ring-2", "ring-green-400");
             setTimeout(() => el.classList.remove("ring-2", "ring-green-400"), 1000);
         }
@@ -270,6 +268,9 @@
 
         function guardarCancion(el) {
             postPanel({ tipo: "editarCancion", id: el.dataset.id, campo: el.dataset.campo, valor: el.value });
+            // Actualiza el modelo local (sin repintar la tabla para no perder el foco).
+            const c = (DATA.canciones || []).find(s => String(s.id) === String(el.dataset.id));
+            if (c) c[el.dataset.campo] = el.dataset.campo === "votos" ? (Number(el.value) || 0) : el.value;
             el.classList.add("ring-2", "ring-green-400");
             setTimeout(() => el.classList.remove("ring-2", "ring-green-400"), 1000);
         }
@@ -277,9 +278,8 @@
         function borrarCancion(id, btn) {
             if (!confirm("¿Borrar esta canción de la lista?")) return;
             postPanel({ tipo: "borrarCancion", id: id });
-            const tr = btn.closest("tr");
-            tr.style.opacity = "0.4";
-            setTimeout(() => cargar(false), 600);
+            DATA.canciones = (DATA.canciones || []).filter(s => String(s.id) !== String(id));
+            renderPlaylist();
         }
 
         function anadirCancion() {
@@ -288,10 +288,15 @@
             const proponente = document.getElementById("nueva-proponente").value.trim();
             if (!titulo) { document.getElementById("nueva-titulo").focus(); return; }
             postPanel({ tipo: "cancion", titulo: titulo, artista: artista, proponente: proponente || "Novios" });
+            // Añade localmente con id temporal; se reconcilia con el id real al recargar.
+            DATA.canciones = DATA.canciones || [];
+            DATA.canciones.push({ id: "tmp" + Date.now(), titulo, artista, proponente: proponente || "Novios", votos: 1 });
+            renderPlaylist();
             document.getElementById("nueva-titulo").value = "";
             document.getElementById("nueva-artista").value = "";
             document.getElementById("nueva-proponente").value = "";
-            setTimeout(() => cargar(false), 700);
+            document.getElementById("nueva-titulo").focus();
+            setTimeout(() => cargar(false), 1500);
         }
 
         function toggleFam(idx) {
@@ -318,9 +323,16 @@
         }
 
         function pintar(data) {
-            const rsvp = data.rsvp || [];
-            // Calculamos el resumen en el cliente: asistentes = adultos totales + niños.
-            let respuestas = rsvp.length, asistenSi = 0, asistenNo = 0, adultos = 0, ninos = 0, bebes = 0;
+            DATA = data;
+            renderResumen();
+            renderRSVP();
+            renderPlaylist();
+            document.getElementById("estado").textContent = "Actualizado: " + new Date().toLocaleString("es-ES");
+        }
+
+        function renderResumen() {
+            const rsvp = (DATA && DATA.rsvp) || [];
+            let asistenSi = 0, asistenNo = 0, adultos = 0, ninos = 0, bebes = 0;
             const num = v => Math.max(0, Number(v) || 0);
             rsvp.forEach(x => {
                 if (String(x.asiste) === "si") {
@@ -331,7 +343,6 @@
                 } else if (String(x.asiste) === "no") { asistenNo++; }
             });
             const asistentes = adultos + ninos;
-
             document.getElementById("resumen").innerHTML =
                 tarjeta(asistenSi, "Familias que asisten", "fa-solid fa-circle-check", "text-green-600") +
                 tarjeta(asistenNo, "No asisten", "fa-solid fa-circle-xmark", "text-red-500") +
@@ -339,12 +350,11 @@
                 tarjeta(ninos, "Niños (menú infantil)", "fa-solid fa-child", "text-weddingGold") +
                 tarjeta(asistentes, "Total comensales (adultos+niños)", "fa-solid fa-users", "text-weddingGreen") +
                 tarjeta(bebes, "Bebés (tronas)", "fa-solid fa-baby", "text-weddingGold");
+        }
 
-            // Listado plegable por familia (se pinta según el filtro activo).
-            renderRSVP();
-
+        function renderPlaylist() {
             const pb = document.getElementById("playlist-body");
-            const songs = (data.canciones||[]).slice().sort((a,b)=>b.votos-a.votos);
+            const songs = ((DATA && DATA.canciones) || []).slice().sort((a,b)=>b.votos-a.votos);
             const inp = (id,campo,valor,extra) => `<input value="${escAttr(valor)}" data-id="${esc(id)}" data-campo="${campo}" onchange="guardarCancion(this)" class="w-full bg-transparent border border-transparent hover:border-weddingGold/30 focus:border-weddingGreen focus:bg-white rounded px-2 py-1 text-sm focus:outline-none ${extra||''}">`;
             pb.innerHTML = songs.map((s,i) => `
                 <tr class="hover:bg-weddingGreenLight/20">
@@ -355,8 +365,6 @@
                     <td class="px-2 py-1 w-16"><input type="number" value="${escAttr(s.votos)}" data-id="${esc(s.id)}" data-campo="votos" onchange="guardarCancion(this)" class="w-14 bg-transparent border border-transparent hover:border-weddingGold/30 focus:border-weddingGreen focus:bg-white rounded px-2 py-1 text-sm text-center font-semibold text-weddingGold focus:outline-none"></td>
                     <td class="px-3 py-2 text-center"><button onclick="borrarCancion('${esc(s.id)}', this)" class="text-red-400 hover:text-red-600" title="Borrar"><i class="fa-solid fa-trash text-sm"></i></button></td>
                 </tr>`).join("") || `<tr><td colspan="6" class="px-3 py-6 text-center text-weddingDark/50">Aún no hay sugerencias.</td></tr>`;
-
-            document.getElementById("estado").textContent = "Actualizado: " + new Date().toLocaleString("es-ES");
         }
 
         let FILTRO = "todas";
@@ -399,7 +407,12 @@
         function borrarFamilia(fila, nombre) {
             if (!confirm('¿Eliminar a "' + nombre + '" de la lista? Esta acción no se puede deshacer.')) return;
             postPanel({ tipo: "borrarFamilia", fila: fila });
-            setTimeout(() => cargar(false), 700);
+            // Quita la familia del modelo local y repinta al instante.
+            DATA.rsvp = (DATA.rsvp || []).filter(r => String(r.fila) !== String(fila));
+            renderResumen();
+            renderRSVP();
+            // Al borrar una fila, las de abajo cambian de número: resincronizamos.
+            setTimeout(() => cargar(false), 1500);
         }
 
         function esc(v) {
