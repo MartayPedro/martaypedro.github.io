@@ -98,16 +98,28 @@
                     <button onclick="abrirNuevaMesa()" class="text-sm uppercase tracking-wider text-white font-semibold bg-weddingGreen rounded-full px-4 py-2 hover:bg-weddingGreen/90 transition"><i class="fa-solid fa-plus mr-1"></i> Nueva mesa</button>
                 </div>
             </div>
-            <div class="grid lg:grid-cols-[300px_1fr] gap-6 items-start">
+            <div id="mesas-resumen" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6"></div>
+            <p class="text-sm text-weddingDark/50 mb-4"><i class="fa-solid fa-circle-info text-weddingGold mr-1"></i> Arrastra a los invitados a su mesa (o pulsa sobre uno para asignarlo desde el móvil).</p>
+            <div class="grid lg:grid-cols-[320px_1fr] gap-6 items-start">
                 <!-- Invitados sin asignar -->
                 <div class="bg-white/60 border border-weddingGold/15 rounded-2xl overflow-hidden">
                     <div class="px-4 py-3 bg-weddingGreenLight/40 text-weddingGreen text-sm uppercase tracking-wider font-semibold flex items-center justify-between">
                         <span>Sin asignar</span><span id="pool-count" class="opacity-70"></span>
                     </div>
-                    <div id="pool" class="p-3 space-y-2 min-h-[120px]" ondragover="permitirSoltar(event)" ondrop="soltarEn(event, null)"></div>
+                    <div id="pool" class="p-3 min-h-[120px]" ondragover="permitirSoltar(event)" ondrop="soltarEn(event, null)"></div>
                 </div>
                 <!-- Mesas -->
                 <div id="mesas-cont" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+            </div>
+        </div>
+
+        <!-- Modal asignar (táctil) -->
+        <div id="modal-asignar" class="hidden fixed inset-0 z-50 bg-black/40 flex items-center justify-center px-6" onclick="cerrarAsignar(event)">
+            <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-lg" onclick="event.stopPropagation()">
+                <h3 class="font-serif text-xl text-weddingGreen mb-1">Asignar a</h3>
+                <p id="asignar-nombre" class="text-sm text-weddingDark/60 mb-4"></p>
+                <div id="asignar-opciones" class="space-y-2 max-h-[50vh] overflow-y-auto"></div>
+                <button onclick="cerrarAsignar()" class="mt-4 w-full px-4 py-2 text-sm uppercase tracking-wider text-weddingDark/60 font-semibold rounded-full hover:bg-weddingGreenLight/40">Cancelar</button>
             </div>
         </div>
 
@@ -641,7 +653,7 @@
 
         function chipInvitado(g) {
             const tipoCorto = g.tipo.replace(" (menú infantil)", "").replace(" (trona)", "");
-            return `<div draggable="true" ondragstart="arrastrar(event,'${g.id}')" title="Familia de ${escAttr(g.familia)}${g.alergia ? ' · ' + escAttr(g.alergia) : ''}" class="cursor-grab active:cursor-grabbing bg-white border border-weddingGold/30 rounded-xl px-3 py-2 text-sm flex items-center gap-2 hover:border-weddingGreen">
+            return `<div draggable="true" ondragstart="arrastrar(event,'${g.id}')" onclick="abrirAsignar('${g.id}')" title="Familia de ${escAttr(g.familia)}${g.alergia ? ' · ' + escAttr(g.alergia) : ''}" class="cursor-grab active:cursor-grabbing bg-white border border-weddingGold/30 rounded-xl px-3 py-2 text-sm flex items-center gap-2 hover:border-weddingGreen">
                 <i class="fa-solid fa-grip-vertical text-weddingDark/30 text-xs"></i>
                 <span class="font-semibold text-weddingGreen">${esc(g.nombre)}</span>
                 ${g.alergia ? '🍽️' : ''}
@@ -656,9 +668,25 @@
             // Limpia asignaciones de invitados que ya no existen.
             Object.keys(MESAS.asignaciones).forEach(id => { if (!ids[id]) delete MESAS.asignaciones[id]; });
 
+            // Pool agrupado por familias (para verlos juntos aunque se sienten en mesas distintas).
             const sinAsignar = guests.filter(g => !MESAS.asignaciones[g.id]);
-            document.getElementById("pool").innerHTML = sinAsignar.map(chipInvitado).join("") || '<p class="text-sm text-weddingDark/40 px-1 py-2">Todos asignados 🎉</p>';
+            const porFamilia = {};
+            sinAsignar.forEach(g => { (porFamilia[g.familia] = porFamilia[g.familia] || []).push(g); });
+            const poolHtml = Object.keys(porFamilia).map(fam => `
+                <div class="mb-3 last:mb-0">
+                    <p class="text-xs uppercase tracking-wider text-weddingDark/45 font-semibold px-1 mb-1">${esc(fam)} <span class="opacity-60">(${porFamilia[fam].length})</span></p>
+                    <div class="space-y-2">${porFamilia[fam].map(chipInvitado).join("")}</div>
+                </div>`).join("");
+            document.getElementById("pool").innerHTML = poolHtml || '<p class="text-sm text-weddingDark/40 px-1 py-2">Todos asignados 🎉</p>';
             document.getElementById("pool-count").textContent = sinAsignar.length;
+
+            // Resumen de mesas.
+            const plazas = MESAS.tables.reduce((s, t) => s + (Number(t.capacidad) || 0), 0);
+            const asignados = guests.length - sinAsignar.length;
+            const card = (v, l) => `<div class="bg-white/70 border border-weddingGold/15 rounded-2xl p-3 text-center"><div class="font-serif text-2xl text-weddingGreen">${v}</div><div class="text-[9px] uppercase tracking-wider text-weddingDark/60">${l}</div></div>`;
+            document.getElementById("mesas-resumen").innerHTML =
+                card(MESAS.tables.length, "Mesas") + card(plazas, "Plazas totales") +
+                card(asignados, "Asignados") + card(sinAsignar.length, "Sin asignar");
 
             document.getElementById("mesas-cont").innerHTML = MESAS.tables.map(t => {
                 const ocupantes = guests.filter(g => MESAS.asignaciones[g.id] === t.id);
@@ -687,6 +715,36 @@
             else MESAS.asignaciones[id] = tableId;
             renderMesas();
             guardarMesas();
+        }
+
+        // Asignación táctil: pulsar un invitado y elegir mesa.
+        function abrirAsignar(id) {
+            const g = invitadosTodos().find(x => x.id === id);
+            if (!g) return;
+            document.getElementById("asignar-nombre").textContent = g.nombre + " · familia de " + g.familia;
+            const actual = MESAS.asignaciones[id] || null;
+            const guests = invitadosTodos();
+            const btn = (tid, etiqueta, info, activa) => `<button onclick="asignarA('${id}', ${tid === null ? 'null' : "'" + tid + "'"})" class="w-full text-left px-4 py-3 rounded-xl border text-sm flex items-center justify-between gap-2 ${activa ? 'border-weddingGreen bg-weddingGreenLight/40 text-weddingGreen font-semibold' : 'border-weddingGold/30 hover:border-weddingGreen'}">
+                <span>${esc(etiqueta)}</span><span class="text-xs text-weddingDark/45">${info}</span></button>`;
+            const opciones = MESAS.tables.map(t => {
+                const ocup = guests.filter(x => MESAS.asignaciones[x.id] === t.id).length;
+                return btn(t.id, t.nombre, iconoForma(t.forma) + " " + ocup + "/" + t.capacidad, actual === t.id);
+            }).join("");
+            document.getElementById("asignar-opciones").innerHTML =
+                btn(null, "Sin asignar", "", actual === null) + opciones ||
+                '<p class="text-sm text-weddingDark/50">Crea una mesa primero.</p>';
+            document.getElementById("modal-asignar").classList.remove("hidden");
+        }
+        function asignarA(id, tableId) {
+            if (tableId === null) delete MESAS.asignaciones[id];
+            else MESAS.asignaciones[id] = tableId;
+            cerrarAsignar();
+            renderMesas();
+            guardarMesas();
+        }
+        function cerrarAsignar(e) {
+            if (e && e.target !== e.currentTarget) return;
+            document.getElementById("modal-asignar").classList.add("hidden");
         }
 
         function abrirNuevaMesa() {
