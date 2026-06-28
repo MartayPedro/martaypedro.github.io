@@ -394,6 +394,11 @@
             return String(texto || "").split(/[,\/]/).map(s => s.trim()).filter(Boolean);
         }
 
+        // Clave normalizada (sin mayúsculas ni acentos) para agrupar alérgenos iguales.
+        function normalizar(s) {
+            return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
+        }
+
         function renderRSVP() {
             if (!DATA) return;
             const rsvp = DATA.rsvp || [];
@@ -443,18 +448,25 @@
                 return `<div class="bg-white/60 border border-weddingGold/15 rounded-2xl px-4 py-6 text-center text-weddingDark/50">No hay comensales con alergias registradas.</div>`;
             }
 
-            // Sub-filtros: un chip por cada alérgeno detectado (con su recuento).
-            const cuenta = {};
-            items.forEach(it => it.tokens.forEach(t => { cuenta[t] = (cuenta[t] || 0) + 1; }));
-            const tipos = Object.keys(cuenta).sort((a, b) => a.localeCompare(b, "es"));
+            // Sub-filtros: un chip por alérgeno, agrupando los que solo difieren en mayúsculas/acentos.
+            const cuenta = {}, etiqueta = {};
+            items.forEach(it => {
+                it.claves = it.tokens.map(normalizar);
+                new Set(it.claves).forEach(k => {
+                    if (!k) return;
+                    cuenta[k] = (cuenta[k] || 0) + 1;
+                    if (!etiqueta[k]) etiqueta[k] = it.tokens[it.claves.indexOf(k)]; // primera forma vista
+                });
+            });
+            const tipos = Object.keys(cuenta).sort((a, b) => etiqueta[a].localeCompare(etiqueta[b], "es"));
             if (SUBFILTRO && !cuenta[SUBFILTRO]) SUBFILTRO = null;
-            const chip = (t, lab, n, activo) => `<button onclick="setSubFiltro(${t === null ? 'null' : "'" + t.replace(/'/g, "\\'") + "'"})" class="text-sm rounded-full px-3 py-1 border transition ${activo ? 'bg-weddingGold text-white border-weddingGold' : 'text-weddingDark/70 border-weddingGold/40 hover:bg-weddingGold/10'}">${esc(lab)}${n != null ? ` <span class="opacity-70">(${n})</span>` : ''}</button>`;
+            const chip = (k, lab, n, activo) => `<button onclick="setSubFiltro(${k === null ? 'null' : "'" + k.replace(/'/g, "\\'") + "'"})" class="text-sm rounded-full px-3 py-1 border transition ${activo ? 'bg-weddingGold text-white border-weddingGold' : 'text-weddingDark/70 border-weddingGold/40 hover:bg-weddingGold/10'}">${esc(lab)}${n != null ? ` <span class="opacity-70">(${n})</span>` : ''}</button>`;
             const chips = `<div class="flex flex-wrap gap-2 px-4 py-3 bg-weddingGreenLight/30 border-b border-weddingGold/10">
                 ${chip(null, "Todas", items.length, !SUBFILTRO)}
-                ${tipos.map(t => chip(t, t, cuenta[t], SUBFILTRO === t)).join("")}
+                ${tipos.map(k => chip(k, etiqueta[k], cuenta[k], SUBFILTRO === k)).join("")}
             </div>`;
 
-            const visibles = SUBFILTRO ? items.filter(it => it.tokens.includes(SUBFILTRO)) : items;
+            const visibles = SUBFILTRO ? items.filter(it => it.claves.includes(SUBFILTRO)) : items;
             const filas = visibles.map(it => `
                 <div class="flex items-start gap-3 px-4 py-3 border-b border-weddingGold/10 last:border-0">
                     <span class="w-2 h-2 mt-2 rounded-full bg-red-400 flex-shrink-0"></span>
@@ -466,7 +478,7 @@
                     <div class="text-weddingDark/80 text-right flex-1">🍽️ ${esc(it.alergia)}</div>
                 </div>`).join("");
             const titulo = SUBFILTRO
-                ? `${visibles.length} comensal(es) con "${esc(SUBFILTRO)}"`
+                ? `${visibles.length} comensal(es) con "${esc(etiqueta[SUBFILTRO])}"`
                 : `${items.length} comensal(es) con alergias`;
             return `<div class="bg-white/60 border border-weddingGold/15 rounded-2xl overflow-hidden">
                 ${chips}
