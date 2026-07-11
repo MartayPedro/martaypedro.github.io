@@ -782,12 +782,8 @@
         // Enlace al álbum compartido de Google Fotos (o carpeta de Drive).
         const ALBUM_URL = "https://photos.app.goo.gl/VW4Sj7LZwwdVeNhf7";
 
-        // Clave de la API de Google Gemini para el asistente "Azahar".
-        // Consíguela GRATIS en https://aistudio.google.com/apikey y pégala entre las comillas.
-        // IMPORTANTE: restríngela por "Sitios web" (referrer) a tu dominio para que nadie más la use.
-        // Si se deja vacía, el asistente avisa de que no está configurado.
-        const GEMINI_API_KEY = "";
-        const GEMINI_MODEL = "gemini-2.5-flash";
+        // El asistente "Azahar" se resuelve en el backend (Apps Script), donde vive la clave
+        // de Gemini de forma segura. Aquí no hay ninguna clave. Ver apps-script/Codigo.gs.
         // ===================================================
 
         // State variables for the application
@@ -1258,69 +1254,39 @@
             appendMessage("user", query);
             input.value = "";
 
-            // Si no hay clave configurada, avisamos con claridad en vez de fallar en silencio.
-            if (!GEMINI_API_KEY) {
-                appendMessage("assistant", "¡Ay, corazón! Todavía me están terminando de configurar. Mientras tanto, en esta misma web tenéis toda la información: la Iglesia de Santa Marina (17:30 h), la Hacienda S'cultura (banquete) y el Hotel Puerta Osario (código <strong>TRENADO</strong>). 🌺");
-                console.warn("Asistente Azahar: falta GEMINI_API_KEY en la configuración de index.html.");
+            if (!APPS_SCRIPT_URL) {
+                appendMessage("assistant", "¡Ay, corazón! Todavía me están terminando de configurar. Mientras tanto, en esta misma web tenéis toda la información. 🌺");
                 return;
             }
 
             const loadingId = appendMessage("assistant-loading", "Pensando mi respuesta...");
 
             try {
-                WeddingState.chatHistory.push({ role: "user", parts: [{ text: query }] });
-
-                const systemPrompt = `
-                Eres Azahar, la distinguida y simpática coordinadora de bodas de Marta y Pedro José.
-                Te diriges a los invitados con inmensa cercanía, cariño y elegancia, empleando giros sutiles del acento andaluz de Córdoba sin perder la pulcritud y el tono romántico minimalista del evento.
-                Tienes pleno conocimiento de la planificación de la boda para el 11 de Octubre de 2026.
-
-                DATOS CRUCIALES DE LA BODA:
-                - Pareja: Marta y Pedro José.
-                - Fecha del enlace: Domingo 11 de Octubre de 2026.
-                - Ceremonia: A las 17:30 H en la bellísima "Iglesia de Santa Marina de Aguas Santas" en Córdoba capital (Plaza de Santa Marina, s/n).
-                - Banquete / Fiesta: A partir de las 19:30 H en la romántica "Hacienda S'cultura" (Carretera Palma del Río, Km 6.8, 14005 Córdoba). Un paraje magnífico al cobijo de Sierra Morena. Se recomienda coger taxi, autobús habilitado o coche particular.
-                - Alojamiento concertado: "Hotel Puerta Osario" en pleno corazón monumental de Córdoba (Calle Osario, 7).
-                  * CÓDIGO PROMOCIONAL: "TRENADO". Ofrece descuento especial para los invitados.
-                  * MUY IMPORTANTE: Se aplica en la parte inferior de la web oficial al seleccionar fechas y huéspedes, pulsando en el icono de promoción.
-                  * REQUISITO DE ESTANCIA: Estancia mínima obligatoria de 2 noches. Teléfono: +34 957 485 411. Web oficial: https://www.hotellaboutique.com/
-                - Fecha límite para confirmar la asistencia: 1 de Septiembre de 2026 en el formulario de esta página.
-                - En esta web los invitados también pueden proponer música bailable y subir fotos de forma colectiva.
-
-                HISTORIA DE AMOR DE LA PAREJA (MARTA Y PEDRO JOSÉ):
-                - Pasaron años compartiendo amigos, momentos y miradas que siempre parecían encontrarse, sintiendo que su historia ya había comenzado mucho antes de su primer paso formal.
-                - Fue una noche de septiembre, bajo el maravilloso cielo de Córdoba, cuando decidieron dejar de imaginar y empezar a vivirlo de verdad. Desde entonces caminan juntos.
-                - El maravilloso compromiso y el "sí, quiero" tuvo lugar en un rincón paradisíaco de las Maldivas, frente al océano turquesa y bajo un cielo infinito.
-
-                Responde siempre de manera cálida, sucinta pero extraordinariamente clara. Si te preguntan sobre temas ajenos a la boda, recuérdales de manera atenta y cariñosa que estás concentrada en que el gran día de Marta y Pedro José salga a pedir de boca.
-                `;
-
-                const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent?key=" + GEMINI_API_KEY;
-                const payload = {
-                    contents: WeddingState.chatHistory,
-                    systemInstruction: {
-                        parts: [{ text: systemPrompt }]
-                    }
-                };
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                // Enviamos el mensaje y el historial reciente al backend, que llama a Gemini
+                // con la clave guardada de forma segura en el servidor.
+                const params = new URLSearchParams({
+                    chat: query,
+                    historia: JSON.stringify(WeddingState.chatHistory.slice(-6))
                 });
-
-                if (!response.ok) {
-                    const detalle = await response.text().catch(() => "");
-                    throw new Error("Error IA " + response.status + ": " + detalle);
-                }
-
+                const response = await fetch(APPS_SCRIPT_URL + "?" + params.toString());
                 const result = await response.json();
-                const replyText = result.candidates?.[0]?.content?.parts?.[0]?.text || "¡Ay mi alma! Me he distraído un momentito. ¿Te importaría volverme a preguntar?";
 
                 document.getElementById(loadingId).remove();
+
+                if (!result.ok) {
+                    if (result.error === "sin-clave") {
+                        appendMessage("assistant", "¡Ay, corazón! Todavía me están terminando de configurar. Mientras tanto, en esta misma web tenéis toda la información: la Iglesia de Santa Marina (17:30 h), la Hacienda S'cultura (banquete) y el Hotel Puerta Osario (código <strong>TRENADO</strong>). 🌺");
+                        return;
+                    }
+                    throw new Error(result.error || "Error IA");
+                }
+
+                const replyText = result.reply || "¡Ay mi alma! Me he distraído un momentito. ¿Te importaría volverme a preguntar?";
                 appendMessage("assistant", replyText);
 
-                WeddingState.chatHistory.push(result.candidates[0].content);
+                // Guardamos el turno en el historial local para dar contexto al siguiente mensaje.
+                WeddingState.chatHistory.push({ role: "user", parts: [{ text: query }] });
+                WeddingState.chatHistory.push({ role: "model", parts: [{ text: replyText }] });
 
             } catch (err) {
                 console.error(err);

@@ -26,8 +26,35 @@ var HOJA_CONFIG = "Config"; // guarda la distribución de mesas (JSON en A1)
 // ⚠️ CAMBIA esta clave por una tuya. Es la contraseña para entrar al panel.
 var CLAVE_PANEL = "marta-pedro-2026";
 
+// ⚠️ Clave de la API de Google Gemini para el asistente "Azahar".
+//   - Consíguela GRATIS en https://aistudio.google.com/apikey
+//   - Pégala aquí ENTRE LAS COMILLAS (se queda en tu Apps Script, nunca en la web pública).
+//   - Si la dejas vacía, el asistente avisa de que no está configurado.
+var GEMINI_API_KEY = "";
+var GEMINI_MODEL = "gemini-2.5-flash";
+
+// Personalidad e información que usa el asistente Azahar.
+var PROMPT_AZAHAR =
+  'Eres Azahar, la distinguida y simpática coordinadora de bodas de Marta y Pedro José. ' +
+  'Te diriges a los invitados con inmensa cercanía, cariño y elegancia, empleando giros sutiles del acento andaluz de Córdoba sin perder la pulcritud y el tono romántico minimalista del evento. ' +
+  'Tienes pleno conocimiento de la planificación de la boda para el 11 de Octubre de 2026.\n\n' +
+  'DATOS CRUCIALES DE LA BODA:\n' +
+  '- Pareja: Marta y Pedro José.\n' +
+  '- Fecha del enlace: Domingo 11 de Octubre de 2026.\n' +
+  '- Ceremonia: A las 17:30 H en la "Iglesia de Santa Marina de Aguas Santas" en Córdoba capital (Plaza de Santa Marina, s/n).\n' +
+  '- Banquete / Fiesta: A partir de las 19:30 H en la "Hacienda S\'cultura" (Carretera Palma del Río, Km 6.8, 14005 Córdoba). Se recomienda coger taxi, autobús habilitado o coche particular.\n' +
+  '- Alojamiento concertado: "Hotel Puerta Osario" (Calle Osario, 7). Código promocional "TRENADO" con descuento; se aplica en la web oficial del hotel al seleccionar fechas. Estancia mínima 2 noches. Teléfono: +34 957 485 411.\n' +
+  '- Fecha límite para confirmar la asistencia: 1 de Septiembre de 2026 en el formulario de esta web.\n' +
+  '- En esta web los invitados también pueden proponer música bailable y subir fotos.\n\n' +
+  'HISTORIA DE AMOR: Se conocieron entre amigos y miradas; una noche de septiembre bajo el cielo de Córdoba empezaron su historia; el "sí, quiero" fue en las Maldivas, frente al océano.\n\n' +
+  'Responde siempre de manera cálida, sucinta pero muy clara. Si te preguntan temas ajenos a la boda, recuérdalo con cariño y redirige al gran día de Marta y Pedro José.';
+
 function doGet(e) {
   try {
+    // Asistente Azahar: resolvemos el chat en el servidor (la clave nunca sale de aquí).
+    if (e && e.parameter && e.parameter.chat) {
+      return json(responderAzahar(e.parameter.chat, e.parameter.historia));
+    }
     // Si llega la clave correcta, devolvemos TODOS los datos para el panel.
     if (e && e.parameter && e.parameter.panel) {
       if (e.parameter.panel !== CLAVE_PANEL) {
@@ -136,6 +163,34 @@ function leerRSVP() {
     });
   }
   return filas;
+}
+
+// Llama a Gemini con el mensaje y el historial reciente. Devuelve {ok, reply} o {ok:false, error}.
+function responderAzahar(mensaje, historiaJson) {
+  if (!GEMINI_API_KEY) return { ok: false, error: "sin-clave" };
+  var contents = [];
+  try { if (historiaJson) contents = JSON.parse(historiaJson); } catch (e) { contents = []; }
+  if (!(contents instanceof Array)) contents = [];
+  contents.push({ role: "user", parts: [{ text: String(mensaje || "") }] });
+
+  var payload = {
+    contents: contents,
+    systemInstruction: { parts: [{ text: PROMPT_AZAHAR }] }
+  };
+  var url = "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent?key=" + GEMINI_API_KEY;
+  var resp = UrlFetchApp.fetch(url, {
+    method: "post",
+    contentType: "application/json",
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  });
+  if (resp.getResponseCode() !== 200) {
+    return { ok: false, error: "IA " + resp.getResponseCode() };
+  }
+  var data = JSON.parse(resp.getContentText());
+  var texto = data && data.candidates && data.candidates[0] && data.candidates[0].content &&
+    data.candidates[0].content.parts && data.candidates[0].content.parts[0].text;
+  return { ok: true, reply: texto || "" };
 }
 
 function leerMesas() {
