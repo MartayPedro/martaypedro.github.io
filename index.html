@@ -781,6 +781,13 @@
 
         // Enlace al álbum compartido de Google Fotos (o carpeta de Drive).
         const ALBUM_URL = "https://photos.app.goo.gl/VW4Sj7LZwwdVeNhf7";
+
+        // Clave de la API de Google Gemini para el asistente "Azahar".
+        // Consíguela GRATIS en https://aistudio.google.com/apikey y pégala entre las comillas.
+        // IMPORTANTE: restríngela por "Sitios web" (referrer) a tu dominio para que nadie más la use.
+        // Si se deja vacía, el asistente avisa de que no está configurado.
+        const GEMINI_API_KEY = "";
+        const GEMINI_MODEL = "gemini-2.5-flash";
         // ===================================================
 
         // State variables for the application
@@ -1251,6 +1258,13 @@
             appendMessage("user", query);
             input.value = "";
 
+            // Si no hay clave configurada, avisamos con claridad en vez de fallar en silencio.
+            if (!GEMINI_API_KEY) {
+                appendMessage("assistant", "¡Ay, corazón! Todavía me están terminando de configurar. Mientras tanto, en esta misma web tenéis toda la información: la Iglesia de Santa Marina (17:30 h), la Hacienda S'cultura (banquete) y el Hotel Puerta Osario (código <strong>TRENADO</strong>). 🌺");
+                console.warn("Asistente Azahar: falta GEMINI_API_KEY en la configuración de index.html.");
+                return;
+            }
+
             const loadingId = appendMessage("assistant-loading", "Pensando mi respuesta...");
 
             try {
@@ -1281,7 +1295,7 @@
                 Responde siempre de manera cálida, sucinta pero extraordinariamente clara. Si te preguntan sobre temas ajenos a la boda, recuérdales de manera atenta y cariñosa que estás concentrada en que el gran día de Marta y Pedro José salga a pedir de boca.
                 `;
 
-                const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=";
+                const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent?key=" + GEMINI_API_KEY;
                 const payload = {
                     contents: WeddingState.chatHistory,
                     systemInstruction: {
@@ -1296,7 +1310,8 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error("Error en el servicio de IA");
+                    const detalle = await response.text().catch(() => "");
+                    throw new Error("Error IA " + response.status + ": " + detalle);
                 }
 
                 const result = await response.json();
