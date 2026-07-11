@@ -1244,55 +1244,90 @@
             submitterInput.value = "";
         }
 
-        // --- AI CHATBOT ASSISTANT LOGIC ---
-        async function handleChatSubmit(event) {
+        // --- ASISTENTE AZAHAR (preguntas frecuentes, sin claves ni conexión) ---
+        function handleChatSubmit(event) {
             event.preventDefault();
             const input = document.getElementById("chat-input");
             const query = input.value.trim();
-            if(!query) return;
+            if (!query) return;
 
             appendMessage("user", query);
             input.value = "";
 
-            if (!APPS_SCRIPT_URL) {
-                appendMessage("assistant", "¡Ay, corazón! Todavía me están terminando de configurar. Mientras tanto, en esta misma web tenéis toda la información. 🌺");
-                return;
+            // Pequeña pausa "pensando" para dar naturalidad.
+            const loadingId = appendMessage("assistant-loading", "Un momentito, corazón...");
+            setTimeout(() => {
+                document.getElementById(loadingId).remove();
+                appendMessage("assistant", responderAzahar(query));
+            }, 450);
+        }
+
+        // Normaliza texto (minúsculas, sin acentos) para comparar sin depender de tildes.
+        function normalizarTexto(s) {
+            return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+        }
+
+        // Base de conocimiento de la boda: cada regla tiene palabras clave y su respuesta.
+        function responderAzahar(pregunta) {
+            const q = normalizarTexto(pregunta);
+            const tiene = (...palabras) => palabras.some(p => q.includes(p));
+
+            // Cuenta atrás hasta el enlace.
+            if (tiene("cuanto queda", "cuantos dias", "countdown", "cuenta atras", "falta para")) {
+                const dias = Math.max(0, Math.ceil((new Date("2026-10-11T17:30:00") - new Date()) / 86400000));
+                return `¡Ay, qué ilusión! Quedan **${dias} días** para el gran día. 🗓️ El **domingo 11 de octubre de 2026** nos vemos en Córdoba.`;
+            }
+            if (tiene("como te llamas", "quien eres", "tu nombre", "quien es azahar", "eres azahar")) {
+                return "Soy **Azahar**, la conserje virtual de la boda de Marta y Pedro José. 🌺 Estoy aquí para ayudaros con todo lo del gran día.";
+            }
+            if (tiene("hola", "buenas", "buenos dias", "buenas tardes", "que tal", "saludos")) {
+                return "¡Hola, mi arma! 🌸 Soy Azahar. ¿En qué puedo ayudarte? Puedes preguntarme por la **ceremonia**, el **banquete**, el **hotel**, cómo **confirmar asistencia**, la **música** o las **fotos**.";
+            }
+            if (tiene("fecha", "que dia", "cuando es", "cuando se")) {
+                return "El enlace es el **domingo 11 de octubre de 2026**. Ceremonia a las **17:30 h** y celebración a partir de las **19:30 h**. ✨";
+            }
+            if (tiene("ceremonia", "iglesia", "misa", "enlace", "santa marina")) {
+                return "La ceremonia será a las **17:30 h** en la **Iglesia de Santa Marina de Aguas Santas** (Plaza de Santa Marina, s/n, Córdoba capital). ⛪";
+            }
+            if (tiene("banquete", "fiesta", "convite", "celebracion", "hacienda", "scultura", "s'cultura", "cena", "comida")) {
+                return "La celebración es a partir de las **19:30 h** en la **Hacienda S'cultura** (Ctra. Palma del Río, Km 6.8, 14005 Córdoba), un paraje precioso al cobijo de Sierra Morena. 🥂";
+            }
+            if (tiene("como llegar", "llegar", "transporte", "taxi", "autobus", "bus", "aparcar", "parking", "coche", "aparcamiento")) {
+                return "Para llegar a la Hacienda S'cultura os recomendamos **taxi**, el **autobús habilitado** o **coche particular**. Hay sitio para aparcar. 🚗";
+            }
+            if (tiene("hotel", "alojamiento", "dormir", "hospedaje", "noche", "puerta osario")) {
+                return "El alojamiento concertado es el **Hotel Puerta Osario** (Calle Osario, 7, Córdoba). Con el código **TRENADO** tenéis descuento (se aplica en la web del hotel al elegir fechas). Estancia mínima de **2 noches**. 📞 +34 957 485 411.";
+            }
+            if (tiene("codigo", "descuento", "trenado", "promocion", "oferta")) {
+                return "El código de descuento para el Hotel Puerta Osario es **TRENADO**. Se aplica en la web oficial del hotel al seleccionar las fechas. 🏨";
+            }
+            if (tiene("confirmar", "asistencia", "asistir", "rsvp", "apuntar", "apuntarme", "confirmacion", "vais a ir", "voy a ir")) {
+                return "Puedes confirmar tu asistencia en el **formulario de esta misma web** (sección «Confirmar Asistencia»). La fecha límite es el **1 de septiembre de 2026**. 💌";
+            }
+            if (tiene("alergia", "intolerancia", "menu", "vegetariano", "vegano", "celiaco", "gluten", "niños", "niño", "bebe", "trona")) {
+                return "En el **formulario de confirmación** puedes indicar las **alergias o intolerancias de cada comensal**, así como los **niños** (menú infantil) y **bebés** (trona). 🍽️";
+            }
+            if (tiene("musica", "cancion", "canciones", "playlist", "pinchar", "bailar", "tema")) {
+                return "¡Nos encanta! En la sección de **música** de esta web puedes **proponer canciones** para la fiesta y votar las de los demás. 🎶";
+            }
+            if (tiene("foto", "fotos", "album", "imagenes", "video")) {
+                return "Podéis subir vuestras **fotos** al álbum compartido desde la sección de fotos de la web, para que entre todos guardemos los mejores recuerdos. 📸";
+            }
+            if (tiene("regalo", "cuenta", "numero de cuenta", "lista de boda", "iban", "sobre")) {
+                return "Lo más importante es vuestra compañía. 💛 Para cualquier detalle sobre este tema, mejor preguntad directamente a Marta o Pedro José.";
+            }
+            if (tiene("vestimenta", "etiqueta", "dress code", "como voy", "que me pongo", "traje", "vestido")) {
+                return "Para dudas sobre la vestimenta, os recomiendo consultarlo con Marta y Pedro José, que os orientarán con mucho gusto. 👗🤵";
+            }
+            if (tiene("gracias", "muchas gracias", "genial", "perfecto")) {
+                return "¡A ti, corazón! Aquí me tienes para lo que necesites. 🌺";
+            }
+            if (tiene("adios", "hasta luego", "chao", "nos vemos")) {
+                return "¡Hasta pronto, mi arma! Nos vemos en Córdoba para el gran día. 🌸";
             }
 
-            const loadingId = appendMessage("assistant-loading", "Pensando mi respuesta...");
-
-            try {
-                // Enviamos el mensaje y el historial reciente al backend, que llama a Gemini
-                // con la clave guardada de forma segura en el servidor.
-                const params = new URLSearchParams({
-                    chat: query,
-                    historia: JSON.stringify(WeddingState.chatHistory.slice(-6))
-                });
-                const response = await fetch(APPS_SCRIPT_URL + "?" + params.toString());
-                const result = await response.json();
-
-                document.getElementById(loadingId).remove();
-
-                if (!result.ok) {
-                    if (result.error === "sin-clave") {
-                        appendMessage("assistant", "¡Ay, corazón! Todavía me están terminando de configurar. Mientras tanto, en esta misma web tenéis toda la información: la Iglesia de Santa Marina (17:30 h), la Hacienda S'cultura (banquete) y el Hotel Puerta Osario (código <strong>TRENADO</strong>). 🌺");
-                        return;
-                    }
-                    throw new Error(result.error || "Error IA");
-                }
-
-                const replyText = result.reply || "¡Ay mi alma! Me he distraído un momentito. ¿Te importaría volverme a preguntar?";
-                appendMessage("assistant", replyText);
-
-                // Guardamos el turno en el historial local para dar contexto al siguiente mensaje.
-                WeddingState.chatHistory.push({ role: "user", parts: [{ text: query }] });
-                WeddingState.chatHistory.push({ role: "model", parts: [{ text: replyText }] });
-
-            } catch (err) {
-                console.error(err);
-                document.getElementById(loadingId).remove();
-                appendMessage("assistant", "Lo siento, corazón, se me ha cortado la cobertura con las hermosas callejas de Córdoba. Pregúntame otra vez o recuerda que en esta misma web tienes los datos del Hotel Puerta Osario (Código: TRENADO), la Iglesia de Santa Marina y la Hacienda S'cultura.");
-            }
+            // Sin coincidencia: guiamos con lo que sí sabe responder.
+            return "¡Ay, esa no me la sé de memoria! 🌷 Pero puedo ayudarte con: la **fecha**, la **ceremonia**, el **banquete**, **cómo llegar**, el **hotel y su código de descuento**, **confirmar asistencia**, la **música** y las **fotos**. ¿Sobre cuál te cuento?";
         }
 
         function appendMessage(sender, text) {
