@@ -31,7 +31,7 @@ var CLAVE_PANEL = "marta-pedro-2026";
 //   - Pégala aquí ENTRE LAS COMILLAS (se queda en tu Apps Script, nunca en la web pública).
 //   - Si la dejas vacía, el asistente avisa de que no está configurado.
 var GEMINI_API_KEY = "";
-var GEMINI_MODEL = "gemini-2.5-flash";
+var GEMINI_MODEL = "gemini-2.0-flash";
 
 // Personalidad e información que usa el asistente Azahar.
 var PROMPT_AZAHAR =
@@ -177,15 +177,16 @@ function responderAzahar(mensaje, historiaJson) {
     contents: contents,
     systemInstruction: { parts: [{ text: PROMPT_AZAHAR }] }
   };
-  var url = "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent?key=" + GEMINI_API_KEY;
+  var url = "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent";
   var resp = UrlFetchApp.fetch(url, {
     method: "post",
     contentType: "application/json",
+    headers: { "x-goog-api-key": GEMINI_API_KEY },
     payload: JSON.stringify(payload),
     muteHttpExceptions: true
   });
   if (resp.getResponseCode() !== 200) {
-    return { ok: false, error: "IA " + resp.getResponseCode() };
+    return { ok: false, error: "IA " + resp.getResponseCode(), detalle: resp.getContentText().slice(0, 500) };
   }
   var data = JSON.parse(resp.getContentText());
   var texto = data && data.candidates && data.candidates[0] && data.candidates[0].content &&
